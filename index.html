@@ -83,7 +83,9 @@
 </div>
 
 <script>
-    const SHEET_ID = '1nKjVnDDEWXcRGo4ka6aYb7U3mxZ7ouSJD-qmSmQImKY';
+    // [수정됨] 선생님께서 새로 알려주신 스프레드시트 주소의 ID로 변경했습니다.
+    const SHEET_ID = '1eCOOWVg3heGRl_5W--_irrfbEAvHU0io77kyJHc5AKA';
+    
     const API_KEY = 'AIzaSyBzE09gR37WosPsArNy-IXhwsgUWqtEu7M'; 
 
     // --- 1. 개인 일정 리스트 검색 기능 ---
@@ -214,7 +216,7 @@
             // 해당 날짜를 찾으면
             if (sheetDate.includes(searchStr1) || sheetDate.includes(searchStr2) || sheetDate.includes(month + '월' + day + '일')) {
                 
-                // C열(인덱스 2)부터 감독 선생님 이름 추출 (B열은 요일로 가정)
+                // C열(인덱스 2)부터 감독 선생님 이름 추출
                 for (let j = 2; j < row.length; j++) {
                     if (row[j] && row[j].trim() !== '') {
                         let loc = headers[j] ? headers[j] : '기타';
@@ -253,6 +255,7 @@
                     let date = row[0] ? row[0] : '';
                     let day = '';
                     let location = headers[j] ? headers[j] : j + '열';
+                    // 두 번째 열(인덱스 1)이 짧은 텍스트(요일)인지 확인
                     if (j >= 2 && row[1] && row[1].length <= 3) day = row[1];
                     let displayText = date + (day ? ' (' + day + ')' : '') + ' ➡️ <span class="location-text">' + location + '</span>';
                     foundDates.push(displayText);
