@@ -27,14 +27,17 @@
         .date-list { list-style-type: none; padding: 0; margin: 0; }
         .date-list li { background: #e8f5e9; margin-bottom: 8px; padding: 12px; border-radius: 5px; color: #333; font-size: 15px; }
         .location-text { color: #d35400; font-weight: bold; }
+        .error-text { color: #e74c3c; font-weight: bold; text-align: center; margin-top: 20px; }
         
         /* 달력 보기(전체 일정) 스타일 */
         #calendarScreen { display: none; }
+        .calendar-header { display: flex; justify-content: center; align-items: center; margin-bottom: 10px; }
+        .cal-nav-btn { background-color: #f39c12; width: auto; padding: 8px 15px; font-size: 14px; margin: 0 10px; }
         .calendar-table { width: 100%; border-collapse: collapse; margin-top: 10px; table-layout: fixed; }
         .calendar-table th, .calendar-table td { border: 1px solid #ddd; padding: 5px; vertical-align: top; height: 90px; overflow: hidden; }
         .calendar-table th { background-color: #f8f9fa; text-align: center; height: auto; padding: 10px 0; font-size: 14px; }
-        .calendar-table th:first-child, .calendar-table td:first-child { color: red; } /* 일요일 빨간색 */
-        .calendar-table th:last-child, .calendar-table td:last-child { color: blue; } /* 토요일 파란색 */
+        .calendar-table th:first-child, .calendar-table td:first-child { color: red; } 
+        .calendar-table th:last-child, .calendar-table td:last-child { color: blue; } 
         .cal-date { font-weight: bold; margin-bottom: 5px; text-align: left; font-size: 14px; }
         .cal-item { background: #e3f2fd; color: #0277bd; font-size: 11px; padding: 3px; margin-bottom: 3px; border-radius: 3px; text-align: left; word-break: keep-all; line-height: 1.2; border-left: 3px solid #0288d1; }
         .cal-item b { color: #333; font-size: 10px; display: block; margin-bottom: 1px; }
@@ -58,7 +61,7 @@
     </div>
     
     <div>
-        <button class="cal-btn" onclick="showFullCalendar()">이번 달 전체 달력 보기</button>
+        <button class="cal-btn" onclick="initCalendar()">전체 달력 보기</button>
     </div>
     
     <div id="loading">데이터를 불러오는 중입니다... 잠시만 기다려주세요.</div>
@@ -75,7 +78,11 @@
 
 <!-- 전체 달력 화면 -->
 <div class="container" id="calendarScreen">
-    <h1 id="calendarTitle"></h1>
+    <div class="calendar-header">
+        <button class="cal-nav-btn" onclick="changeMonth(-1)">◀ 이전</button>
+        <span id="calendarTitle" style="font-size:20px; font-weight:bold;"></span>
+        <button class="cal-nav-btn" onclick="changeMonth(1)">다음 ▶</button>
+    </div>
     <div id="calendarContainer"></div>
     <div style="text-align: center;">
         <button class="back-btn" onclick="goBack()">돌아가기</button>
@@ -83,12 +90,15 @@
 </div>
 
 <script>
-    // [수정됨] 선생님께서 새로 알려주신 스프레드시트 주소의 ID로 변경했습니다.
     const SHEET_ID = '1eCOOWVg3heGRl_5W--_irrfbEAvHU0io77kyJHc5AKA';
-    
     const API_KEY = 'AIzaSyBzE09gR37WosPsArNy-IXhwsgUWqtEu7M'; 
 
-    // --- 1. 개인 일정 리스트 검색 기능 ---
+    let currentCalYear = new Date().getFullYear();
+    let currentCalMonth = new Date().getMonth() + 1;
+    let globalSheetData = null; // 시트 데이터를 한번 불러와서 저장해둘 변수
+    let globalHeaders = null;
+
+    // --- 1. 개인 일정 리스트 검색 기능 (시트 이름 무시, 첫 번째 시트 전체 검색) ---
     async function checkDates() {
         const nameInput = document.getElementById('teacherName').value.trim();
         if (!nameInput) {
@@ -98,25 +108,17 @@
         showLoading(true);
         try {
             const sheetTitles = await getSheetTitles();
-            const now = new Date();
-            const currentMonthNum = now.getMonth() + 1;
-            const nextMonthNum = currentMonthNum === 12 ? 1 : currentMonthNum + 1;
+            const targetSheet = sheetTitles[0]; // 시트 이름과 관계없이 무조건 첫 번째 시트 선택
 
-            const currentMonthSheet = sheetTitles.find(t => t.includes(currentMonthNum + '월'));
-            const nextMonthSheet = sheetTitles.find(t => t.includes(nextMonthNum + '월'));
-
-            let finalHtml = '';
-            if (currentMonthSheet) {
-                const dates = await fetchSheetAndFindDates(currentMonthSheet, nameInput);
-                finalHtml += buildMonthHtml(currentMonthNum + '월', dates);
-            }
-            if (nextMonthSheet) {
-                const dates = await fetchSheetAndFindDates(nextMonthSheet, nameInput);
-                finalHtml += buildMonthHtml(nextMonthNum + '월', dates);
-            }
-
+            const dates = await fetchSheetAndFindDates(targetSheet, nameInput);
+            
             document.getElementById('resultTitle').innerText = nameInput + ' 선생님 감독일정';
-            document.getElementById('resultsContainer').innerHTML = finalHtml || '<p>검색 결과가 없습니다.</p>';
+            
+            if (dates && dates.length > 0) {
+                document.getElementById('resultsContainer').innerHTML = buildMonthHtml('전체 배정 일정', dates);
+            } else {
+                document.getElementById('resultsContainer').innerHTML = '<p class="error-text">검색된 감독 일정이 전혀 없습니다.</p><p style="font-size:14px; color:#7f8c8d; text-align:center;">이름에 오타가 없는지 확인해주세요.</p>';
+            }
             
             switchScreen('resultScreen');
         } catch (error) {
@@ -126,41 +128,48 @@
         }
     }
 
-    // --- 2. 이번 달 전체 달력 보기 기능 ---
-    async function showFullCalendar() {
+    // --- 2. 전체 달력 보기 기능 (월 넘김 기능 포함) ---
+    async function initCalendar() {
+        currentCalYear = new Date().getFullYear();
+        currentCalMonth = new Date().getMonth() + 1;
+        await loadAndRenderCalendar();
+    }
+
+    async function changeMonth(delta) {
+        currentCalMonth += delta;
+        if (currentCalMonth > 12) {
+            currentCalMonth = 1;
+            currentCalYear++;
+        } else if (currentCalMonth < 1) {
+            currentCalMonth = 12;
+            currentCalYear--;
+        }
+        await loadAndRenderCalendar();
+    }
+
+    async function loadAndRenderCalendar() {
         showLoading(true);
         try {
-            const sheetTitles = await getSheetTitles();
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = now.getMonth() + 1; // 1~12
-
-            const currentMonthSheet = sheetTitles.find(t => t.includes(month + '월'));
-            
-            if (!currentMonthSheet) {
-                alert(month + '월 시트가 스프레드시트에 존재하지 않습니다.');
-                showLoading(false);
-                return;
+            // 데이터를 아직 안 불러왔다면 첫 번째 시트에서 불러오기
+            if (!globalSheetData) {
+                const sheetTitles = await getSheetTitles();
+                const targetSheet = sheetTitles[0]; // 시트 이름 무시, 첫 번째 시트 선택
+                
+                const dataUrl = 'https://sheets.googleapis.com/v4/spreadsheets/' + SHEET_ID + '/values/' + targetSheet + '!A:Z?key=' + API_KEY;
+                const response = await fetch(dataUrl);
+                const json = await response.json();
+                
+                if (!json.values || json.values.length < 2) {
+                    throw new Error('시트에 데이터가 부족합니다.');
+                }
+                
+                globalHeaders = json.values[0];
+                globalSheetData = json.values;
             }
 
-            // 시트 데이터 전체 가져오기
-            const dataUrl = 'https://sheets.googleapis.com/v4/spreadsheets/' + SHEET_ID + '/values/' + currentMonthSheet + '!A:Z?key=' + API_KEY;
-            const response = await fetch(dataUrl);
-            const json = await response.json();
-            const rows = json.values;
-
-            if (!rows || rows.length < 2) {
-                alert('시트에 데이터가 부족합니다.');
-                showLoading(false);
-                return;
-            }
-
-            const headers = rows[0]; // 1행 (장소들)
+            const calendarHtml = buildCalendarHTML(currentCalYear, currentCalMonth, globalSheetData, globalHeaders);
             
-            // 달력 HTML 생성
-            const calendarHtml = buildCalendarHTML(year, month, rows, headers);
-            
-            document.getElementById('calendarTitle').innerText = year + '년 ' + month + '월 감독표';
+            document.getElementById('calendarTitle').innerText = currentCalYear + '년 ' + currentCalMonth + '월';
             document.getElementById('calendarContainer').innerHTML = calendarHtml;
             
             switchScreen('calendarScreen');
@@ -173,25 +182,21 @@
 
     // --- 달력 HTML 구조를 그리는 함수 ---
     function buildCalendarHTML(year, month, rows, headers) {
-        const firstDay = new Date(year, month - 1, 1).getDay(); // 0(일) ~ 6(토)
-        const daysInMonth = new Date(year, month, 0).getDate(); // 해당 월의 총 일수
+        const firstDay = new Date(year, month - 1, 1).getDay();
+        const daysInMonth = new Date(year, month, 0).getDate(); 
 
         let html = '<table class="calendar-table">';
         html += '<tr><th>일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th></tr><tr>';
 
         let dayCount = 1;
-        // 최대 6주(42일) 칸 생성
         for (let i = 0; i < 42; i++) {
             if (i < firstDay || dayCount > daysInMonth) {
-                html += '<td></td>'; // 빈 칸
+                html += '<td></td>';
             } else {
-                // 해당 날짜의 데이터(감독 선생님들) 찾기
                 const dayDataHtml = findDataForCalendar(rows, month, dayCount, headers);
                 html += '<td><div class="cal-date">' + dayCount + '</div>' + dayDataHtml + '</td>';
                 dayCount++;
             }
-            
-            // 토요일(인덱스 6, 13, 20...)마다 줄바꿈
             if ((i + 1) % 7 === 0) {
                 html += '</tr><tr>';
             }
@@ -200,10 +205,9 @@
         return html;
     }
 
-    // --- 달력의 각 칸(날짜)에 들어갈 데이터를 시트에서 찾는 함수 ---
+    // --- 달력의 각 칸(날짜)에 들어갈 데이터를 찾는 함수 ---
     function findDataForCalendar(rows, month, day, headers) {
         let result = '';
-        // 시트의 날짜 형식이 다양할 수 있으므로 여러 형태로 검사 (예: "7/1", "7.1", "7월1일")
         const searchStr1 = month + '/' + day;
         const searchStr2 = month + '.' + day;
         
@@ -211,19 +215,17 @@
             const row = rows[i];
             if (!row || !row[0]) continue;
             
-            const sheetDate = row[0].replace(/\s/g, ''); // 공백 제거
+            const sheetDate = row[0].replace(/\s/g, ''); 
             
-            // 해당 날짜를 찾으면
-            if (sheetDate.includes(searchStr1) || sheetDate.includes(searchStr2) || sheetDate.includes(month + '월' + day + '일')) {
-                
-                // C열(인덱스 2)부터 감독 선생님 이름 추출
+            // 날짜 문자열 검사 (예: 7/8, 7.8, 7월8일)
+            if (sheetDate === searchStr1 || sheetDate === searchStr2 || sheetDate.includes(month + '월' + day + '일')) {
                 for (let j = 2; j < row.length; j++) {
                     if (row[j] && row[j].trim() !== '') {
                         let loc = headers[j] ? headers[j] : '기타';
                         result += '<div class="cal-item"><b>' + loc + '</b>' + row[j] + '</div>';
                     }
                 }
-                break; // 날짜를 찾았으므로 더 이상 해당 행 반복 안함
+                break; 
             }
         }
         return result;
@@ -255,11 +257,10 @@
                     let date = row[0] ? row[0] : '';
                     let day = '';
                     let location = headers[j] ? headers[j] : j + '열';
-                    // 두 번째 열(인덱스 1)이 짧은 텍스트(요일)인지 확인
                     if (j >= 2 && row[1] && row[1].length <= 3) day = row[1];
                     let displayText = date + (day ? ' (' + day + ')' : '') + ' ➡️ <span class="location-text">' + location + '</span>';
                     foundDates.push(displayText);
-                    break;
+                    break; // 해당 날짜에서 내 이름을 찾았으면, 그 날짜 줄은 더 안 뒤짐
                 }
             }
         }
@@ -268,14 +269,9 @@
 
     function buildMonthHtml(monthLabel, dates) {
         let html = '<div class="month-section"><div class="month-title">' + monthLabel + '</div>';
-        if (!dates || dates.length === 0) {
-            html += '<p style="color:#7f8c8d; font-size: 14px;">배정된 감독일이 없습니다.</p>';
-        } else {
-            html += '<ul class="date-list">';
-            for (let i = 0; i < dates.length; i++) html += '<li>' + dates[i] + '</li>';
-            html += '</ul>';
-        }
-        html += '</div>';
+        html += '<ul class="date-list">';
+        for (let i = 0; i < dates.length; i++) html += '<li>' + dates[i] + '</li>';
+        html += '</ul></div>';
         return html;
     }
 
@@ -291,6 +287,7 @@
     }
 
     function goBack() {
+        document.getElementById('teacherName').value = '';
         switchScreen('loginScreen');
     }
 </script>
