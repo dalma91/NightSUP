@@ -173,7 +173,7 @@
                 let dateStr = row[0] ? row[0] : '';
                 let month = extractMonth(dateStr);
 
-                // ★ 해당 날짜의 '사감' 선생님 및 2~4층 감독 현황 모두 미리 수집 ★
+                // 해당 날짜의 '사감' 선생님 및 2~4층 감독 현황 모두 미리 수집
                 let sagamName = '';
                 let floorGroups = {};
 
@@ -199,7 +199,7 @@
                     }
                 }
 
-                // 모아둔 2~4층 감독 명단을 하나의 예쁜 문자열로 병합
+                // 2~4층 감독 명단을 병합
                 let floorInfoArr = [];
                 ['2층', '3층', '4층'].forEach(fl => {
                     if (floorGroups[fl]) {
@@ -208,7 +208,7 @@
                 });
                 let floorStr = floorInfoArr.join(' | ');
 
-                // 내 이름(검색어)이 있는지 확인하여 출력
+                // 내 이름 검색하여 출력
                 for (let j = 1; j < row.length; j++) {
                     if (row[j] && row[j].replace(/\s/g, '').includes(searchedName.replace(/\s/g, ''))) {
                         let day = '';
@@ -219,21 +219,23 @@
                         if (location.includes('2층')) locColor = 'black';
                         else if (location.includes('3층')) locColor = '#0056b3';
                         else if (location.includes('4층')) locColor = '#198754';
-                        else if (location.includes('사감')) locColor = '#8e44ad'; // 사감은 보라색
+                        else if (location.includes('사감')) locColor = '#8e44ad'; 
                         else if (location.includes('비고')) locColor = '#dc3545';
 
                         let displayText = dateStr + (day ? ' (' + day + ')' : '');
 
-                        // ★ 만약 본인이 '사감'으로 검색되었다면, 2~4층 감독 현황을 괄호로 묶어서 앞에 함께 표시!
+                        // ★ 본인이 '사감'으로 배정된 경우, 이름 포함해서 표기!
                         if (location.includes('사감')) {
+                            // "사감"이라는 위치와 함께 본인 이름(사감이름)을 조합합니다.
+                            let displayLocation = `${location} (${sagamName})`; 
+                            
                             if (floorStr) {
-                                // 사감일 경우 출력 형태: 날짜 ➡️ [현황] ➡️ 사감
-                                displayText += ` <br>➡️ <span style="font-size: 13.5px; color: #2c3e50; background: #fff; padding: 2px 6px; border-radius: 4px; border: 1px solid #bdc3c7;">[ ${floorStr} ]</span> ➡️ <span style="color: ${locColor}; font-weight: bold; font-size:16px;">${location}</span>`;
+                                displayText += ` <br>➡️ <span style="font-size: 13.5px; color: #2c3e50; background: #fff; padding: 2px 6px; border-radius: 4px; border: 1px solid #bdc3c7;">[ ${floorStr} ]</span> ➡️ <span style="color: ${locColor}; font-weight: bold; font-size:16px;">${displayLocation}</span>`;
                             } else {
-                                displayText += ` ➡️ <span style="color: ${locColor}; font-weight: bold;">${location}</span>`;
+                                displayText += ` ➡️ <span style="color: ${locColor}; font-weight: bold;">${displayLocation}</span>`;
                             }
                         } 
-                        // 본인이 사감이 아닌 일반 층 감독일 경우, 평소처럼 맨 뒤에 사감 정보만 표시
+                        // 본인이 사감이 아닌 경우
                         else {
                             displayText += ` ➡️ <span style="color: ${locColor}; font-weight: bold;">${location}</span>`;
                             if (sagamName) {
@@ -421,7 +423,7 @@
                 if (showTimeHeaders) {
                     topHeaderHtml += `<div style="display:flex; gap:5px; justify-content:flex-end;">`;
                     dayTimeMarks.forEach(tm => {
-                        topHeaderHtml += `<div style="width:45px; text-align:center; font-size:11.5px; color:#555; font-weight:bold;">${tm}</div>`;
+                        topHeaderHtml += `<div style="width:55px; text-align:center; font-size:11.5px; color:#555; font-weight:bold;">${tm}</div>`;
                     });
                     topHeaderHtml += `</div>`;
                 }
@@ -451,10 +453,16 @@
                         dayTimeMarks.forEach(tm => {
                             let person = group.find(g => g.timeMark === tm);
                             let nameStr = person ? person.name : '';
-                            namesHtml += `<div style="width:45px; text-align:center; font-weight:bold; font-size:12.5px;">${nameStr}</div>`;
+                            // ★ 캘린더 화면에서도 '사감'일 경우 이름 앞에 사감 글자를 추가하여 명확하게 표현
+                            if (baseLoc === '사감' && nameStr) nameStr = `사감 ${nameStr}`;
+                            
+                            namesHtml += `<div style="width:55px; text-align:center; font-weight:bold; font-size:12.5px;">${nameStr}</div>`;
                         });
                     } else {
                         let nameStr = group.map(g => g.name).join(', ');
+                        // ★ 캘린더 화면에서도 '사감'일 경우 이름 앞에 사감 글자를 추가
+                        if (baseLoc === '사감' && nameStr) nameStr = `사감 ${nameStr}`;
+                        
                         namesHtml += `<div style="width:100%; text-align:center; font-weight:bold; font-size:12.5px;">${nameStr}</div>`;
                     }
                     namesHtml += `</div>`;
