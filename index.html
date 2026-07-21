@@ -15,7 +15,8 @@
         .month-section { margin-bottom: 20px; }
         .month-title { font-weight: bold; font-size: 18px; color: #2c3e50; border-bottom: 2px solid #4CAF50; padding-bottom: 5px; margin-bottom: 10px; }
         .date-list { list-style-type: none; padding: 0; margin: 0; }
-        .date-list li { background: #e8f5e9; margin-bottom: 5px; padding: 10px; border-radius: 5px; color: #333; }
+        .date-list li { background: #e8f5e9; margin-bottom: 8px; padding: 12px; border-radius: 5px; color: #333; font-size: 15px; }
+        .location-text { color: #d35400; font-weight: bold; }
         .back-btn { background-color: #888; margin-top: 20px; }
         #loading { display: none; color: #666; font-size: 14px; margin-top: 10px; }
     </style>
@@ -36,10 +37,10 @@
 </div>
 
 <script>
-    // [설정] 구글 스프레드시트 ID (URL에서 추출)
+    // [설정] 구글 스프레드시트 ID
     const SHEET_ID = '1nKjVnDDEWXcRGo4ka6aYb7U3mxZ7ouSJD-qmSmQImKY';
     
-    // [중요] Google Cloud Console에서 발급받은 API 키를 여기에 입력하세요.
+    // [중요] 선생님의 구글 API 키 적용 완료
     const API_KEY = 'AIzaSyBzE09gR37WosPsArNy-IXhwsgUWqtEu7M'; 
 
     async function checkDates() {
@@ -52,7 +53,6 @@
         document.getElementById('loading').style.display = 'block';
 
         try {
-            // 1. 스프레드시트 메타데이터를 가져와 시트(탭) 이름들을 읽습니다.
             const metaUrl = 'https://sheets.googleapis.com/v4/spreadsheets/' + SHEET_ID + '?key=' + API_KEY;
             const metaResponse = await fetch(metaUrl);
             const metaData = await metaResponse.json();
@@ -63,18 +63,15 @@
                 return sheet.properties.title;
             });
 
-            // 2. 현재 달과 다음 달 계산
             const now = new Date();
             const currentMonthNum = now.getMonth() + 1;
             const nextMonthNum = currentMonthNum === 12 ? 1 : currentMonthNum + 1;
 
-            // 시트 이름에서 해당 월 찾기 (예: "7월", "8월"이 포함된 시트)
             const currentMonthSheet = sheetTitles.find(function(t) { return t.includes(currentMonthNum + '월'); });
             const nextMonthSheet = sheetTitles.find(function(t) { return t.includes(nextMonthNum + '월'); });
 
             let finalHtml = '';
 
-            // 3. 현재 월 데이터 조회
             if (currentMonthSheet) {
                 const dates = await fetchSheetAndFindDates(currentMonthSheet, nameInput);
                 finalHtml += buildMonthHtml(currentMonthNum + '월', dates);
@@ -82,7 +79,6 @@
                 finalHtml += buildMonthHtml(currentMonthNum + '월', null);
             }
 
-            // 4. 다음 월 데이터 조회
             if (nextMonthSheet) {
                 const dates = await fetchSheetAndFindDates(nextMonthSheet, nameInput);
                 finalHtml += buildMonthHtml(nextMonthNum + '월', dates);
@@ -90,8 +86,7 @@
                 finalHtml += buildMonthHtml(nextMonthNum + '월', null);
             }
 
-            // 5. 결과 화면 출력
-            document.getElementById('resultTitle').innerText = nameInput + ' 선생님 감독일자';
+            document.getElementById('resultTitle').innerText = nameInput + ' 선생님 감독일정';
             document.getElementById('resultsContainer').innerHTML = finalHtml;
             
             document.getElementById('loginScreen').style.display = 'none';
@@ -105,7 +100,6 @@
         }
     }
 
-    // 특정 시트의 데이터를 가져와 이름을 검색하는 함수
     async function fetchSheetAndFindDates(sheetName, targetName) {
         const dataUrl = 'https://sheets.googleapis.com/v4/spreadsheets/' + SHEET_ID + '/values/' + sheetName + '!A:Z?key=' + API_KEY;
         const response = await fetch(dataUrl);
@@ -114,18 +108,30 @@
         
         let foundDates = [];
         
-        if (!rows) return foundDates;
+        if (!rows || rows.length === 0) return foundDates;
 
-        // 행(Row) 반복 검색
-        for (let i = 0; i < rows.length; i++) {
+        const headers = rows[0];
+
+        for (let i = 1; i < rows.length; i++) {
             const row = rows[i];
             if (!row || row.length === 0) continue;
             
-            // B열(인덱스 1)부터 검색
             for (let j = 1; j < row.length; j++) {
                 if (row[j] && row[j].replace(/\s/g, '').includes(targetName.replace(/\s/g, ''))) {
-                    // 이름이 있으면 A열(인덱스 0)의 날짜를 저장
-                    if (row[0]) foundDates.push(row[0]);
+                    
+                    let date = row[0] ? row[0] : '';
+                    let day = '';
+                    let location = headers[j] ? headers[j] : j + '열';
+                    
+                    if (j >= 2 && row[1] && row[1].length <= 3) {
+                        day = row[1];
+                    }
+
+                    let displayText = date;
+                    if (day) displayText += ' (' + day + ')';
+                    if (location) displayText += ' ➡️ <span class="location-text">' + location + '</span>';
+
+                    foundDates.push(displayText);
                     break;
                 }
             }
@@ -133,7 +139,6 @@
         return foundDates;
     }
 
-    // 결과를 HTML 구조로 만들어주는 함수
     function buildMonthHtml(monthLabel, dates) {
         let html = '<div class="month-section"><div class="month-title">' + monthLabel + '</div>';
         if (!dates) {
