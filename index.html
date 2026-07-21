@@ -8,37 +8,32 @@
         body { font-family: 'Malgun Gothic', sans-serif; background-color: #f4f7f6; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         .container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 95%; max-width: 800px; text-align: center; }
         
-        /* 캘린더 화면일 때는 화면 폭을 넓게 씁니다! */
-        #calendarScreen { max-width: 1200px; }
+        #calendarScreen, #adminScreen { max-width: 1200px; }
         
-        /* 메인 화면 스타일 */
         h1 { font-size: 22px; color: #333; margin-bottom: 20px; }
         .input-group { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
-        input[type="text"] { width: 70%; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; text-align: center; }
+        input[type="text"], input[type="password"] { width: 70%; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; text-align: center; }
+        
         button { background-color: #4CAF50; color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 5px; cursor: pointer; width: 75%; font-weight: bold; margin-bottom: 10px;}
         button.cal-btn { background-color: #3498db; }
+        button.admin-btn { background-color: #34495e; width: auto; font-size: 13px; padding: 8px 15px; margin-top: 15px;}
+        button.save-btn { background-color: #e74c3c; width: auto; padding: 10px 20px; }
         button:hover { opacity: 0.9; }
         
-        /* 로딩 및 공통 버튼 */
         #loading { display: none; color: #e67e22; font-weight: bold; font-size: 15px; margin-top: 15px; }
         .back-btn { background-color: #7f8c8d; width: auto; padding: 10px 30px; margin-top: 20px; }
         
-        /* 리스트 보기(월별 필터 버튼) 스타일 */
         .month-filter-container { display: none; flex-wrap: wrap; justify-content: center; gap: 6px; margin-bottom: 20px; }
         .month-btn { background-color: #ecf0f1; color: #2c3e50; border: 1px solid #bdc3c7; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 13px; width: auto; font-weight: normal; margin: 0;}
-        .month-btn:hover { background-color: #d5dbdb; }
         .month-btn.active { background-color: #4CAF50; color: white; border-color: #4CAF50; font-weight: bold; }
         
-        /* 리스트 보기(결과) 스타일 */
-        .result-area { display: none; text-align: left; }
+        .result-area, #calendarScreen, #adminLoginScreen, #adminScreen { display: none; text-align: left; }
         .month-section { margin-bottom: 20px; }
         .month-title { font-weight: bold; font-size: 18px; color: #2c3e50; border-bottom: 2px solid #4CAF50; padding-bottom: 5px; margin-bottom: 10px; }
         .date-list { list-style-type: none; padding: 0; margin: 0; }
         .date-list li { background: #e8f5e9; margin-bottom: 8px; padding: 12px; border-radius: 5px; color: #333; font-size: 15px; line-height: 1.5; }
         .error-text { color: #e74c3c; font-weight: bold; text-align: center; margin-top: 20px; }
         
-        /* 달력 보기(전체 일정) 스타일 */
-        #calendarScreen { display: none; }
         .calendar-header { display: flex; justify-content: center; align-items: center; margin-bottom: 15px; }
         .cal-nav-btn { background-color: #f39c12; width: auto; padding: 8px 15px; font-size: 15px; margin: 0 15px; }
         .calendar-table { width: 100%; border-collapse: collapse; margin-top: 10px; table-layout: fixed; }
@@ -48,15 +43,13 @@
         .calendar-table th:last-child, .calendar-table td:last-child { color: blue; } 
         .cal-date { font-weight: bold; margin-bottom: 5px; text-align: left; font-size: 15px; }
         
-        /* 달력 내부 아이템 */
-        .cal-item { 
-            border-radius: 4px; 
-            margin-bottom: 4px;
-            border-left: 4px solid #ccc; 
-            display: flex; 
-            align-items: center; 
-            padding: 4px;
-        }
+        .cal-item { border-radius: 4px; margin-bottom: 4px; border-left: 4px solid #ccc; display: flex; align-items: center; padding: 4px; min-height: 25px; }
+        
+        /* 드래그 앤 드롭 전용 스타일 */
+        .draggable-name { cursor: grab; background-color: rgba(255,255,255,0.7); border: 1px dashed #aaa; padding: 2px 5px; border-radius: 3px; display: inline-block; margin: 2px; transition: 0.2s; }
+        .draggable-name:active { cursor: grabbing; opacity: 0.5; }
+        .drop-zone { min-height: 25px; padding: 2px; flex-grow: 1; display: flex; flex-wrap: wrap; gap: 3px; align-items: center;}
+        .drop-zone.over { background-color: rgba(243, 156, 18, 0.2); border-radius: 4px; border: 1px dashed #f39c12;}
 
         @media (max-width: 768px) {
             .calendar-table th, .calendar-table td { padding: 3px; height: 90px; }
@@ -70,46 +63,68 @@
 <!-- 메인 화면 -->
 <div class="container" id="loginScreen">
     <h1>🏫 야간자율학습 감독 확인</h1>
-    
     <div class="input-group">
         <input type="text" id="teacherName" placeholder="선생님 성함을 입력하세요">
         <button onclick="checkDates()">내 일정 검색 (월별 확인)</button>
     </div>
-    
     <div>
-        <button class="cal-btn" onclick="initCalendar()">전체 달력 보기</button>
+        <button class="cal-btn" onclick="initCalendar(false)">전체 달력 보기</button>
     </div>
-    
+    <div style="text-align: right;">
+        <button class="admin-btn" onclick="switchScreen('adminLoginScreen')">⚙️ 관리자 로그인</button>
+    </div>
     <div id="loading">데이터를 불러오는 중입니다... 잠시만 기다려주세요.</div>
 </div>
 
 <!-- 개인 리스트 결과 화면 -->
 <div class="container result-area" id="resultScreen">
     <h1 id="resultTitle" style="text-align: center;"></h1>
-    
     <div class="month-filter-container" id="monthFilterContainer"></div>
     <div id="resultsContainer"></div>
-    
-    <div style="text-align: center;">
-        <button class="back-btn" onclick="goBack()">돌아가기</button>
-    </div>
+    <div style="text-align: center;"><button class="back-btn" onclick="goBack()">돌아가기</button></div>
 </div>
 
-<!-- 전체 달력 화면 -->
+<!-- 일반 교사용 달력 화면 -->
 <div class="container" id="calendarScreen">
     <div class="calendar-header">
-        <button class="cal-nav-btn" onclick="changeMonth(-1)">◀ 이전</button>
+        <button class="cal-nav-btn" onclick="changeMonth(-1, false)">◀ 이전</button>
         <span id="calendarTitle" style="font-size:22px; font-weight:bold;"></span>
-        <button class="cal-nav-btn" onclick="changeMonth(1)">다음 ▶</button>
+        <button class="cal-nav-btn" onclick="changeMonth(1, false)">다음 ▶</button>
     </div>
     <div id="calendarContainer"></div>
-    <div style="text-align: center;">
-        <button class="back-btn" onclick="goBack()">돌아가기</button>
+    <div style="text-align: center;"><button class="back-btn" onclick="goBack()">돌아가기</button></div>
+</div>
+
+<!-- 관리자 로그인 화면 -->
+<div class="container" id="adminLoginScreen">
+    <h1>⚙️ 관리자 로그인</h1>
+    <div class="input-group">
+        <input type="text" id="adminId" placeholder="관리자 이름">
+        <input type="password" id="adminPw" placeholder="비밀번호" onkeyup="if(window.event.keyCode==13){adminLogin()}">
+        <button style="background-color: #34495e;" onclick="adminLogin()">로그인</button>
     </div>
+    <div style="text-align: center;"><button class="back-btn" onclick="goBack()">돌아가기</button></div>
+</div>
+
+<!-- 관리자 전용 캘린더 (드래그 앤 드롭) 화면 -->
+<div class="container" id="adminScreen">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h1 style="color: #e74c3c;">🛠️ 관리자 모드 (드래그로 이동 가능)</h1>
+        <button class="save-btn" onclick="saveAdminChanges()">저장하기</button>
+    </div>
+    
+    <div class="calendar-header">
+        <button class="cal-nav-btn" onclick="changeMonth(-1, true)">◀ 이전</button>
+        <span id="adminCalendarTitle" style="font-size:22px; font-weight:bold;"></span>
+        <button class="cal-nav-btn" onclick="changeMonth(1, true)">다음 ▶</button>
+    </div>
+    <div id="adminCalendarContainer"></div>
+    <div style="text-align: center;"><button class="back-btn" onclick="goBack()">로그아웃 및 돌아가기</button></div>
 </div>
 
 <script>
-    const SHEET_ID = '1eCOOWVg3heGRl_5W--_irrfbEAvHU0io77kyJHc5AKA';
+    // 새 스프레드시트 주소 적용
+    const SHEET_ID = '1Y7cCXkLzGLbpy4RqYXljIy5a7RnWzYgp_J_ydatJiA4';
     const API_KEY = 'AIzaSyBzE09gR37WosPsArNy-IXhwsgUWqtEu7M'; 
 
     let currentCalYear = new Date().getFullYear();
@@ -118,7 +133,6 @@
     let globalSheetData = null; 
     let globalHeaders = null;
     let searchDataByMonth = {}; 
-    let searchedName = '';
 
     window.onload = function() {
         buildMonthButtons();
@@ -133,36 +147,79 @@
         document.getElementById('monthFilterContainer').innerHTML = html;
     }
 
-    async function fetchSheetData() {
-        const metaUrl = 'https://sheets.googleapis.com/v4/spreadsheets/' + SHEET_ID + '?key=' + API_KEY;
-        const metaResponse = await fetch(metaUrl);
-        const metaData = await metaResponse.json();
-        if (metaData.error) throw new Error(metaData.error.message);
-
-        const sheetTitles = metaData.sheets.map(sheet => sheet.properties.title);
-        const targetSheet = sheetTitles[0];
-
-        const dataUrl = 'https://sheets.googleapis.com/v4/spreadsheets/' + SHEET_ID + '/values/' + targetSheet + '!A:Z?key=' + API_KEY;
+    // 특정 시트 이름을 지정해서 데이터를 가져오는 공통 함수
+    async function fetchSpecificSheet(sheetName) {
+        const dataUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${sheetName}!A:Z?key=${API_KEY}`;
         const response = await fetch(dataUrl);
         const json = await response.json();
+        if (!json.values) throw new Error(`'${sheetName}' 시트의 데이터를 불러올 수 없습니다.`);
+        return json.values;
+    }
 
-        if (!json.values || json.values.length < 2) throw new Error('시트에 데이터가 없습니다.');
+    // 데이터 초기화 (감독표 시트 전용)
+    async function initSupervisorData() {
+        if (!globalSheetData) {
+            const data = await fetchSpecificSheet('감독표');
+            globalHeaders = data[0];
+            globalSheetData = data;
+        }
+    }
 
-        globalHeaders = json.values[0];
-        globalSheetData = json.values;
+    // --- 관리자 로그인 로직 ---
+    async function adminLogin() {
+        const adminId = document.getElementById('adminId').value.trim();
+        const adminPw = document.getElementById('adminPw').value.trim();
+        
+        if (!adminId || !adminPw) {
+            alert('이름과 비밀번호를 모두 입력해주세요.');
+            return;
+        }
+
+        showLoading(true);
+        try {
+            // '관리자' 시트에서 데이터 확인
+            const adminData = await fetchSpecificSheet('관리자');
+            let isSuccess = false;
+            
+            // 2번째 줄(인덱스 1)부터 검사 (1행은 제목이라고 가정)
+            for (let i = 1; i < adminData.length; i++) {
+                let sheetId = adminData[i][0] ? adminData[i][0].trim() : '';
+                let sheetPw = adminData[i][1] ? adminData[i][1].trim() : '';
+                
+                if (sheetId === adminId && sheetPw === adminPw) {
+                    isSuccess = true;
+                    break;
+                }
+            }
+
+            if (isSuccess) {
+                alert('관리자 로그인 성공!');
+                document.getElementById('adminId').value = '';
+                document.getElementById('adminPw').value = '';
+                initCalendar(true); // 관리자용 캘린더 화면 열기
+            } else {
+                alert('이름 또는 비밀번호가 일치하지 않습니다.');
+            }
+        } catch (error) {
+            alert('오류 발생: 관리자 시트를 확인할 수 없습니다. (' + error.message + ')');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // 관리자 수정 내용 저장 알림 (실제 저장은 앱스스크립트 필요)
+    function saveAdminChanges() {
+        alert('화면상의 배정이 변경되었습니다.\n\n(안내: 현재 API Key 방식으로는 읽기만 가능합니다. 실제 구글 시트에 저장하시려면 Google Apps Script 연동이 추가로 필요합니다.)');
     }
 
     // --- 개인 일정 검색 ---
     async function checkDates() {
-        searchedName = document.getElementById('teacherName').value.trim();
-        if (!searchedName) {
-            alert('이름을 입력해주세요.');
-            return;
-        }
+        let searchedName = document.getElementById('teacherName').value.trim();
+        if (!searchedName) { alert('이름을 입력해주세요.'); return; }
+        
         showLoading(true);
         try {
-            if (!globalSheetData) await fetchSheetData();
-
+            await initSupervisorData();
             for (let m = 1; m <= 12; m++) searchDataByMonth[m] = [];
             let foundAny = false;
 
@@ -172,43 +229,31 @@
 
                 let dateStr = row[0] ? row[0] : '';
                 let month = extractMonth(dateStr);
-
-                // 해당 날짜의 '사감' 선생님 및 2~4층 감독 현황 모두 미리 수집
                 let sagamName = '';
                 let floorGroups = {};
 
                 for (let k = 1; k < globalHeaders.length; k++) {
                     let locHeader = globalHeaders[k] ? globalHeaders[k].trim() : '';
                     let tName = row[k] ? row[k].trim() : '';
-                    
-                    if (locHeader.includes('사감') && tName) {
-                        sagamName = tName;
-                    } else if (tName && !locHeader.includes('비고')) {
+                    if (locHeader.includes('사감') && tName) sagamName = tName;
+                    else if (tName && !locHeader.includes('비고')) {
                         let baseLoc = locHeader;
                         let timeMark = '';
-                        
                         if (locHeader.includes('2층')) { baseLoc = '2층'; timeMark = locHeader.replace('2층', '').replace(/[\(\)]/g, '').trim(); }
                         else if (locHeader.includes('3층')) { baseLoc = '3층'; timeMark = locHeader.replace('3층', '').replace(/[\(\)]/g, '').trim(); }
                         else if (locHeader.includes('4층')) { baseLoc = '4층'; timeMark = locHeader.replace('4층', '').replace(/[\(\)]/g, '').trim(); }
                         
                         if (['2층', '3층', '4층'].includes(baseLoc)) {
-                            let nameWithTime = timeMark ? `${tName}(${timeMark})` : tName;
                             if (!floorGroups[baseLoc]) floorGroups[baseLoc] = [];
-                            floorGroups[baseLoc].push(nameWithTime);
+                            floorGroups[baseLoc].push(timeMark ? `${tName}(${timeMark})` : tName);
                         }
                     }
                 }
 
-                // 2~4층 감독 명단을 병합
                 let floorInfoArr = [];
-                ['2층', '3층', '4층'].forEach(fl => {
-                    if (floorGroups[fl]) {
-                        floorInfoArr.push(`<span style="color:#d35400;">${fl}</span> ${floorGroups[fl].join(', ')}`);
-                    }
-                });
+                ['2층', '3층', '4층'].forEach(fl => { if (floorGroups[fl]) floorInfoArr.push(`<span style="color:#d35400;">${fl}</span> ${floorGroups[fl].join(', ')}`); });
                 let floorStr = floorInfoArr.join(' | ');
 
-                // 내 이름 검색하여 출력
                 for (let j = 1; j < row.length; j++) {
                     if (row[j] && row[j].replace(/\s/g, '').includes(searchedName.replace(/\s/g, ''))) {
                         let day = '';
@@ -224,29 +269,16 @@
 
                         let displayText = dateStr + (day ? ' (' + day + ')' : '');
 
-                        // ★ 본인이 '사감'으로 배정된 경우, 이름 포함해서 표기!
                         if (location.includes('사감')) {
-                            // "사감"이라는 위치와 함께 본인 이름(사감이름)을 조합합니다.
                             let displayLocation = `${location} (${sagamName})`; 
-                            
-                            if (floorStr) {
-                                displayText += ` <br>➡️ <span style="font-size: 13.5px; color: #2c3e50; background: #fff; padding: 2px 6px; border-radius: 4px; border: 1px solid #bdc3c7;">[ ${floorStr} ]</span> ➡️ <span style="color: ${locColor}; font-weight: bold; font-size:16px;">${displayLocation}</span>`;
-                            } else {
-                                displayText += ` ➡️ <span style="color: ${locColor}; font-weight: bold;">${displayLocation}</span>`;
-                            }
-                        } 
-                        // 본인이 사감이 아닌 경우
-                        else {
+                            if (floorStr) displayText += ` <br>➡️ <span style="font-size: 13.5px; color: #2c3e50; background: #fff; padding: 2px 6px; border-radius: 4px; border: 1px solid #bdc3c7;">[ ${floorStr} ]</span> ➡️ <span style="color: ${locColor}; font-weight: bold; font-size:16px;">${displayLocation}</span>`;
+                            else displayText += ` ➡️ <span style="color: ${locColor}; font-weight: bold;">${displayLocation}</span>`;
+                        } else {
                             displayText += ` ➡️ <span style="color: ${locColor}; font-weight: bold;">${location}</span>`;
-                            if (sagamName) {
-                                displayText += ` <span style="color: #7f8c8d; font-size: 13.5px; margin-left: 6px;">(사감: <b>${sagamName}</b>)</span>`;
-                            }
+                            if (sagamName) displayText += ` <span style="color: #7f8c8d; font-size: 13.5px; margin-left: 6px;">(사감: <b>${sagamName}</b>)</span>`;
                         }
 
-                        if (month >= 1 && month <= 12) {
-                            searchDataByMonth[month].push(displayText);
-                            foundAny = true;
-                        }
+                        if (month >= 1 && month <= 12) { searchDataByMonth[month].push(displayText); foundAny = true; }
                         break; 
                     }
                 }
@@ -256,25 +288,16 @@
 
             if (foundAny) {
                 const now = new Date();
-                const curMonth = now.getMonth() + 1;
-                let nextMonth = curMonth + 1;
-                if (nextMonth > 12) nextMonth = 1;
-
+                let nextMonth = now.getMonth() + 2; if (nextMonth > 12) nextMonth = 1;
                 document.getElementById('monthFilterContainer').style.display = 'flex';
                 document.querySelectorAll('.month-btn').forEach(btn => btn.classList.remove('active'));
-                
-                renderSearchResults([curMonth, nextMonth], '이번 달과 다음 달의 일정을 보여줍니다.');
+                renderSearchResults([now.getMonth() + 1, nextMonth], '이번 달과 다음 달의 일정을 보여줍니다.');
             } else {
                 document.getElementById('monthFilterContainer').style.display = 'none';
                 document.getElementById('resultsContainer').innerHTML = '<p class="error-text">검색된 감독 일정이 없습니다.</p>';
             }
-
             switchScreen('resultScreen');
-        } catch (error) {
-            alert('오류 발생: ' + error.message);
-        } finally {
-            showLoading(false);
-        }
+        } catch (error) { alert('오류 발생: ' + error.message); } finally { showLoading(false); }
     }
 
     function filterByMonth(month) {
@@ -282,89 +305,73 @@
         document.getElementById('btn-month-' + month).classList.add('active');
         renderSearchResults([month], month + '월에는 배정된 일정이 없습니다.');
     }
-
     function renderSearchResults(monthsArray, emptyMsg) {
         let html = '';
         monthsArray.forEach(m => {
             if (searchDataByMonth[m] && searchDataByMonth[m].length > 0) {
                 html += '<div class="month-section"><div class="month-title">' + m + '월</div><ul class="date-list">';
-                searchDataByMonth[m].forEach(item => {
-                    html += '<li>' + item + '</li>';
-                });
+                searchDataByMonth[m].forEach(item => { html += '<li>' + item + '</li>'; });
                 html += '</ul></div>';
             }
         });
-        if (html === '') {
-            html = '<p style="color:#7f8c8d; font-size: 15px; text-align:center; padding: 20px 0;">' + emptyMsg + '</p>';
-        }
-        document.getElementById('resultsContainer').innerHTML = html;
+        document.getElementById('resultsContainer').innerHTML = html || '<p style="color:#7f8c8d; text-align:center; padding: 20px 0;">' + emptyMsg + '</p>';
     }
-
     function extractMonth(dateStr) {
         if (!dateStr) return -1;
-        dateStr = dateStr.replace(/\s/g, '');
-        let m = dateStr.match(/^(\d+)[/\.월]/);
-        if (m) return parseInt(m[1], 10);
-        return -1;
+        let m = dateStr.replace(/\s/g, '').match(/^(\d+)[/\.월]/);
+        return m ? parseInt(m[1], 10) : -1;
     }
 
-    // --- 전체 달력 보기 ---
-    async function initCalendar() {
+    // --- 전체 달력 보기 (일반/관리자 통합) ---
+    async function initCalendar(isAdmin) {
         currentCalYear = new Date().getFullYear();
         currentCalMonth = new Date().getMonth() + 1;
-        await loadAndRenderCalendar();
+        await loadAndRenderCalendar(isAdmin);
     }
-
-    async function changeMonth(delta) {
+    async function changeMonth(delta, isAdmin) {
         currentCalMonth += delta;
-        if (currentCalMonth > 12) {
-            currentCalMonth = 1;
-            currentCalYear++;
-        } else if (currentCalMonth < 1) {
-            currentCalMonth = 12;
-            currentCalYear--;
-        }
-        await loadAndRenderCalendar();
+        if (currentCalMonth > 12) { currentCalMonth = 1; currentCalYear++; } 
+        else if (currentCalMonth < 1) { currentCalMonth = 12; currentCalYear--; }
+        await loadAndRenderCalendar(isAdmin);
     }
-
-    async function loadAndRenderCalendar() {
+    async function loadAndRenderCalendar(isAdmin) {
         showLoading(true);
         try {
-            if (!globalSheetData) await fetchSheetData();
-            const calendarHtml = buildCalendarHTML(currentCalYear, currentCalMonth, globalSheetData, globalHeaders);
-            document.getElementById('calendarTitle').innerText = currentCalYear + '년 ' + currentCalMonth + '월';
-            document.getElementById('calendarContainer').innerHTML = calendarHtml;
-            switchScreen('calendarScreen');
-        } catch (error) {
-            alert('오류 발생: ' + error.message);
-        } finally {
-            showLoading(false);
-        }
+            await initSupervisorData();
+            const calendarHtml = buildCalendarHTML(currentCalYear, currentCalMonth, globalSheetData, globalHeaders, isAdmin);
+            
+            if (isAdmin) {
+                document.getElementById('adminCalendarTitle').innerText = currentCalYear + '년 ' + currentCalMonth + '월';
+                document.getElementById('adminCalendarContainer').innerHTML = calendarHtml;
+                setupDragAndDrop(); // 드래그 이벤트 활성화
+                switchScreen('adminScreen');
+            } else {
+                document.getElementById('calendarTitle').innerText = currentCalYear + '년 ' + currentCalMonth + '월';
+                document.getElementById('calendarContainer').innerHTML = calendarHtml;
+                switchScreen('calendarScreen');
+            }
+        } catch (error) { alert('오류 발생: ' + error.message); } finally { showLoading(false); }
     }
 
-    function buildCalendarHTML(year, month, rows, headers) {
+    function buildCalendarHTML(year, month, rows, headers, isAdmin) {
         const firstDay = new Date(year, month - 1, 1).getDay();
         const daysInMonth = new Date(year, month, 0).getDate(); 
-
-        let html = '<table class="calendar-table">';
-        html += '<tr><th>일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th></tr><tr>';
+        let html = '<table class="calendar-table"><tr><th>일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th></tr><tr>';
 
         let dayCount = 1;
         for (let i = 0; i < 42; i++) {
-            if (i < firstDay || dayCount > daysInMonth) {
-                html += '<td></td>';
-            } else {
-                const dayDataHtml = findDataForCalendar(rows, month, dayCount, headers);
-                html += '<td><div class="cal-date">' + dayCount + '</div>' + dayDataHtml + '</td>';
+            if (i < firstDay || dayCount > daysInMonth) html += '<td></td>';
+            else {
+                const dayDataHtml = findDataForCalendar(rows, month, dayCount, headers, isAdmin);
+                html += `<td><div class="cal-date">${dayCount}</div>${dayDataHtml}</td>`;
                 dayCount++;
             }
             if ((i + 1) % 7 === 0) html += '</tr><tr>';
         }
-        html += '</tr></table>';
-        return html;
+        return html + '</tr></table>';
     }
 
-    function findDataForCalendar(rows, month, day, headers) {
+    function findDataForCalendar(rows, month, day, headers, isAdmin) {
         let result = '';
         const searchStr1 = month + '/' + day;
         const searchStr2 = month + '.' + day;
@@ -372,126 +379,144 @@
         for (let i = 1; i < rows.length; i++) {
             const row = rows[i];
             if (!row || !row[0]) continue;
-            
             const sheetDate = row[0].replace(/\s/g, ''); 
             
             if (sheetDate === searchStr1 || sheetDate === searchStr2 || sheetDate.includes(month + '월' + day + '일')) {
-                
-                let groups = {}; 
-                let bigoList = []; 
-                let dayTimeMarks = [];
+                let groups = {}; let bigoList = []; let dayTimeMarks = [];
 
                 for (let j = 2; j < row.length; j++) {
                     if (row[j] && row[j].trim() !== '') {
                         let loc = headers[j] ? headers[j].trim() : '기타';
-                        
-                        if (loc.includes('비고')) {
-                            bigoList.push(row[j]);
-                        } else {
-                            let baseLoc = loc;
-                            let timeMark = '';
-                            
+                        if (loc.includes('비고')) bigoList.push(row[j]);
+                        else {
+                            let baseLoc = loc; let timeMark = '';
                             if (loc.includes('2층')) { baseLoc = '2층'; timeMark = loc.replace('2층', '').replace(/[\(\)]/g, '').trim(); }
                             else if (loc.includes('3층')) { baseLoc = '3층'; timeMark = loc.replace('3층', '').replace(/[\(\)]/g, '').trim(); }
                             else if (loc.includes('4층')) { baseLoc = '4층'; timeMark = loc.replace('4층', '').replace(/[\(\)]/g, '').trim(); }
                             else if (loc.includes('사감')) { baseLoc = '사감'; timeMark = loc.replace('사감', '').replace(/[\(\)]/g, '').trim(); }
                             
-                            if (timeMark && !dayTimeMarks.includes(timeMark)) {
-                                dayTimeMarks.push(timeMark);
-                            }
-
+                            if (timeMark && !dayTimeMarks.includes(timeMark)) dayTimeMarks.push(timeMark);
                             if (!groups[baseLoc]) groups[baseLoc] = [];
                             groups[baseLoc].push({ name: row[j].trim(), timeMark: timeMark });
                         }
                     }
                 }
 
-                let maxSupervisors = 0;
-                for (let loc in groups) {
-                    if (groups[loc].length > maxSupervisors) {
-                        maxSupervisors = groups[loc].length;
-                    }
-                }
-
-                let showTimeHeaders = maxSupervisors >= 2;
+                let showTimeHeaders = Object.values(groups).some(g => g.length >= 2);
 
                 let topHeaderHtml = `<div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom: 5px; min-height: 16px;">`;
-                let bigoStr = bigoList.join(', ');
-                
-                topHeaderHtml += `<div style="color: #e74c3c; font-size: 12px; font-weight: bold; word-break: keep-all; padding-right: 4px;">${bigoStr}</div>`;
-                
+                topHeaderHtml += `<div style="color: #e74c3c; font-size: 12px; font-weight: bold; padding-right: 4px;">${bigoList.join(', ')}</div>`;
                 if (showTimeHeaders) {
                     topHeaderHtml += `<div style="display:flex; gap:5px; justify-content:flex-end;">`;
-                    dayTimeMarks.forEach(tm => {
-                        topHeaderHtml += `<div style="width:55px; text-align:center; font-size:11.5px; color:#555; font-weight:bold;">${tm}</div>`;
-                    });
+                    dayTimeMarks.forEach(tm => { topHeaderHtml += `<div style="width:55px; text-align:center; font-size:11.5px; color:#555; font-weight:bold;">${tm}</div>`; });
                     topHeaderHtml += `</div>`;
                 }
-                topHeaderHtml += `</div>`;
-                
-                result += topHeaderHtml;
+                result += topHeaderHtml + `</div>`;
 
                 const locOrder = ['2층', '3층', '4층', '사감'];
-                const allLocs = Object.keys(groups);
-                const sortedLocs = locOrder.filter(l => allLocs.includes(l)).concat(allLocs.filter(l => !locOrder.includes(l)));
+                const sortedLocs = locOrder.filter(l => Object.keys(groups).includes(l)).concat(Object.keys(groups).filter(l => !locOrder.includes(l)));
 
                 for (let baseLoc of sortedLocs) {
                     let group = groups[baseLoc];
-                    
-                    let textColor = '#333';
-                    let bgColor = '#f8f9fa';
-                    let borderColor = '#ccc';
-
+                    let textColor = '#333'; let bgColor = '#f8f9fa'; let borderColor = '#ccc';
                     if (baseLoc === '2층') { textColor = 'black'; bgColor = '#fdfdfd'; borderColor = '#333'; } 
                     else if (baseLoc === '3층') { textColor = '#0056b3'; bgColor = '#e3f2fd'; borderColor = '#0056b3'; } 
                     else if (baseLoc === '4층') { textColor = '#198754'; bgColor = '#e8f5e9'; borderColor = '#198754'; }
                     else if (baseLoc === '사감') { textColor = '#8e44ad'; bgColor = '#f4ecf7'; borderColor = '#8e44ad'; }
 
-                    let namesHtml = `<div style="display:flex; gap:5px; justify-content:flex-end; width:100%;">`;
+                    // 관리자일 경우 각 층별 영역이 Drop Zone이 됨
+                    result += `<div class="cal-item" style="color: ${textColor}; background-color: ${bgColor}; border-left-color: ${borderColor};">`;
+                    
+                    let namesHtml = `<div class="drop-zone" data-loc="${baseLoc}" style="justify-content:flex-end; width:100%;">`;
 
                     if (showTimeHeaders) {
                         dayTimeMarks.forEach(tm => {
                             let person = group.find(g => g.timeMark === tm);
                             let nameStr = person ? person.name : '';
-                            // ★ 캘린더 화면에서도 '사감'일 경우 이름 앞에 사감 글자를 추가하여 명확하게 표현
                             if (baseLoc === '사감' && nameStr) nameStr = `사감 ${nameStr}`;
                             
-                            namesHtml += `<div style="width:55px; text-align:center; font-weight:bold; font-size:12.5px;">${nameStr}</div>`;
+                            // 관리자면 드래그 가능한 태그 추가
+                            if(isAdmin && nameStr) {
+                                let itemId = `drag-${month}-${day}-${baseLoc}-${tm}-${nameStr}`;
+                                namesHtml += `<div style="width:55px; text-align:center;"><span class="draggable-name" draggable="true" id="${itemId}">${nameStr}</span></div>`;
+                            } else {
+                                namesHtml += `<div style="width:55px; text-align:center; font-weight:bold; font-size:12.5px;">${nameStr}</div>`;
+                            }
                         });
                     } else {
-                        let nameStr = group.map(g => g.name).join(', ');
-                        // ★ 캘린더 화면에서도 '사감'일 경우 이름 앞에 사감 글자를 추가
-                        if (baseLoc === '사감' && nameStr) nameStr = `사감 ${nameStr}`;
-                        
-                        namesHtml += `<div style="width:100%; text-align:center; font-weight:bold; font-size:12.5px;">${nameStr}</div>`;
+                        group.forEach((g, idx) => {
+                            let nameStr = baseLoc === '사감' ? `사감 ${g.name}` : g.name;
+                            if(isAdmin) {
+                                let itemId = `drag-${month}-${day}-${baseLoc}-${idx}-${nameStr}`;
+                                namesHtml += `<span class="draggable-name" draggable="true" id="${itemId}">${nameStr}</span>`;
+                            } else {
+                                namesHtml += `<span style="font-weight:bold; font-size:12.5px; margin-right:5px;">${nameStr}</span>`;
+                            }
+                        });
                     }
-                    namesHtml += `</div>`;
-
-                    result += `
-                    <div class="cal-item" style="color: ${textColor}; background-color: ${bgColor}; border-left-color: ${borderColor};">
-                        ${namesHtml}
-                    </div>`;
+                    result += namesHtml + `</div></div>`;
                 }
-
                 break; 
             }
         }
         return result;
     }
 
-    function showLoading(show) {
-        document.getElementById('loading').style.display = show ? 'block' : 'none';
+    // --- 드래그 앤 드롭 구현 로직 ---
+    function setupDragAndDrop() {
+        const draggables = document.querySelectorAll('.draggable-name');
+        const dropZones = document.querySelectorAll('.drop-zone');
+
+        draggables.forEach(draggable => {
+            draggable.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', draggable.id);
+                setTimeout(() => draggable.style.display = 'none', 0);
+            });
+            draggable.addEventListener('dragend', () => {
+                draggable.style.display = 'inline-block';
+            });
+        });
+
+        dropZones.forEach(zone => {
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault(); // 드롭 허용
+                zone.classList.add('over');
+            });
+            zone.addEventListener('dragleave', () => {
+                zone.classList.remove('over');
+            });
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('over');
+                const id = e.dataTransfer.getData('text/plain');
+                const draggableElement = document.getElementById(id);
+                
+                // 해당 존에 이미 자식 요소(div)로 칸이 나뉘어있다면 가장 가까운 빈 div나 해당 위치에 넣는 복잡한 로직이 필요하나,
+                // 기본적으로 drop-zone 안으로 요소를 이동시킵니다.
+                if (draggableElement) {
+                    if(e.target.tagName === 'DIV' && e.target.parentElement.classList.contains('drop-zone')) {
+                         e.target.innerHTML = ''; // 기존 칸 비우기 (오후/야간 칸 바꿀때)
+                         e.target.appendChild(draggableElement);
+                    } else {
+                        zone.appendChild(draggableElement);
+                    }
+                }
+            });
+        });
     }
 
+    // --- 화면 전환 로직 ---
+    function showLoading(show) { document.getElementById('loading').style.display = show ? 'block' : 'none'; }
     function switchScreen(screenId) {
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('resultScreen').style.display = 'none';
-        document.getElementById('calendarScreen').style.display = 'none';
+        ['loginScreen', 'resultScreen', 'calendarScreen', 'adminLoginScreen', 'adminScreen'].forEach(id => {
+            document.getElementById(id).style.display = 'none';
+        });
         document.getElementById(screenId).style.display = 'block';
     }
-
     function goBack() {
         document.getElementById('teacherName').value = '';
+        document.getElementById('adminId').value = '';
+        document.getElementById('adminPw').value = '';
         switchScreen('loginScreen');
     }
 </script>
