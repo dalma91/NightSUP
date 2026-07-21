@@ -32,7 +32,6 @@
         .month-title { font-weight: bold; font-size: 18px; color: #2c3e50; border-bottom: 2px solid #4CAF50; padding-bottom: 5px; margin-bottom: 10px; }
         .date-list { list-style-type: none; padding: 0; margin: 0; }
         .date-list li { background: #e8f5e9; margin-bottom: 8px; padding: 12px; border-radius: 5px; color: #333; font-size: 15px; }
-        .location-text { color: #d35400; font-weight: bold; }
         .error-text { color: #e74c3c; font-weight: bold; text-align: center; margin-top: 20px; }
         
         /* 달력 보기(전체 일정) 스타일 */
@@ -45,12 +44,14 @@
         .calendar-table th:first-child, .calendar-table td:first-child { color: red; } 
         .calendar-table th:last-child, .calendar-table td:last-child { color: blue; } 
         .cal-date { font-weight: bold; margin-bottom: 5px; text-align: left; font-size: 14px; }
-        .cal-item { background: #e3f2fd; color: #0277bd; font-size: 11px; padding: 4px; margin-bottom: 3px; border-radius: 3px; text-align: left; word-break: keep-all; line-height: 1.2; border-left: 3px solid #0288d1; }
-        .cal-item b { color: #333; font-size: 10px; display: block; margin-bottom: 2px; }
+        
+        /* 달력 내부 아이템 기본 틀 */
+        .cal-item { font-size: 11px; padding: 4px; margin-bottom: 3px; border-radius: 3px; text-align: left; word-break: keep-all; line-height: 1.3; border-left: 3px solid #ccc; }
+        .cal-item b { font-size: 10px; display: block; margin-bottom: 2px; }
 
         @media (max-width: 600px) {
             .calendar-table th, .calendar-table td { padding: 2px; height: 90px; }
-            .cal-item { font-size: 10px; padding: 2px; }
+            .cal-item { font-size: 10px; padding: 3px; }
             .cal-date { font-size: 12px; }
         }
     </style>
@@ -67,7 +68,7 @@
     </div>
     
     <div>
-        <button class="cal-btn" onclick="initCalendar()">전체 달력 보기 (셀 표시)</button>
+        <button class="cal-btn" onclick="initCalendar()">전체 달력 보기</button>
     </div>
     
     <div id="loading">데이터를 불러오는 중입니다... 잠시만 기다려주세요.</div>
@@ -78,9 +79,7 @@
     <h1 id="resultTitle" style="text-align: center;"></h1>
     
     <!-- 3월~2월 필터 버튼 -->
-    <div class="month-filter-container" id="monthFilterContainer">
-        <!-- 스크립트에서 자동 생성됩니다 -->
-    </div>
+    <div class="month-filter-container" id="monthFilterContainer"></div>
 
     <div id="resultsContainer"></div>
     <div style="text-align: center;">
@@ -113,7 +112,6 @@
     let searchDataByMonth = {}; 
     let searchedName = '';
 
-    // 페이지 로드 시 3월~2월 버튼 생성
     window.onload = function() {
         buildMonthButtons();
     };
@@ -127,7 +125,6 @@
         document.getElementById('monthFilterContainer').innerHTML = html;
     }
 
-    // --- 1. 데이터 가져오기 공통 함수 ---
     async function fetchSheetData() {
         const metaUrl = 'https://sheets.googleapis.com/v4/spreadsheets/' + SHEET_ID + '?key=' + API_KEY;
         const metaResponse = await fetch(metaUrl);
@@ -135,7 +132,7 @@
         if (metaData.error) throw new Error(metaData.error.message);
 
         const sheetTitles = metaData.sheets.map(sheet => sheet.properties.title);
-        const targetSheet = sheetTitles[0]; // 시트 이름 무시하고 무조건 첫 번째 시트
+        const targetSheet = sheetTitles[0];
 
         const dataUrl = 'https://sheets.googleapis.com/v4/spreadsheets/' + SHEET_ID + '/values/' + targetSheet + '!A:Z?key=' + API_KEY;
         const response = await fetch(dataUrl);
@@ -149,7 +146,7 @@
         globalSheetData = json.values;
     }
 
-    // --- 2. 개인 일정 검색 ---
+    // --- 개인 일정 검색 ---
     async function checkDates() {
         searchedName = document.getElementById('teacherName').value.trim();
         if (!searchedName) {
@@ -160,7 +157,6 @@
         try {
             if (!globalSheetData) await fetchSheetData();
 
-            // 월별 검색 데이터 초기화
             for (let m = 1; m <= 12; m++) searchDataByMonth[m] = [];
             let foundAny = false;
 
@@ -169,7 +165,7 @@
                 if (!row || row.length === 0) continue;
 
                 let dateStr = row[0] ? row[0] : '';
-                let month = extractMonth(dateStr); // 날짜에서 월(Month) 추출
+                let month = extractMonth(dateStr);
 
                 for (let j = 1; j < row.length; j++) {
                     if (row[j] && row[j].replace(/\s/g, '').includes(searchedName.replace(/\s/g, ''))) {
@@ -177,7 +173,13 @@
                         let location = globalHeaders[j] ? globalHeaders[j] : j + '열';
                         if (j >= 2 && row[1] && row[1].length <= 3) day = row[1];
 
-                        let displayText = dateStr + (day ? ' (' + day + ')' : '') + ' ➡️ <span class="location-text">' + location + '</span>';
+                        let locColor = '#555'; 
+                        if (location.includes('2층')) locColor = 'black';
+                        else if (location.includes('3층')) locColor = '#0056b3';
+                        else if (location.includes('4층')) locColor = '#198754';
+                        else if (location.includes('비고')) locColor = '#dc3545';
+
+                        let displayText = dateStr + (day ? ' (' + day + ')' : '') + ` ➡️ <span style="color: ${locColor}; font-weight: bold;">` + location + '</span>';
 
                         if (month >= 1 && month <= 12) {
                             searchDataByMonth[month].push(displayText);
@@ -199,7 +201,6 @@
                 document.getElementById('monthFilterContainer').style.display = 'flex';
                 document.querySelectorAll('.month-btn').forEach(btn => btn.classList.remove('active'));
                 
-                // 검색 직후 기본적으로 [현재 달]과 [다음 달]만 출력
                 renderSearchResults([curMonth, nextMonth], '이번 달과 다음 달의 일정을 보여줍니다.');
             } else {
                 document.getElementById('monthFilterContainer').style.display = 'none';
@@ -214,15 +215,12 @@
         }
     }
 
-    // 특정 월 버튼 클릭 시 해당 월만 보이게 하는 함수
     function filterByMonth(month) {
         document.querySelectorAll('.month-btn').forEach(btn => btn.classList.remove('active'));
         document.getElementById('btn-month-' + month).classList.add('active');
-        
         renderSearchResults([month], month + '월에는 배정된 일정이 없습니다.');
     }
 
-    // 추출한 월의 리스트를 화면에 그리는 함수
     function renderSearchResults(monthsArray, emptyMsg) {
         let html = '';
         monthsArray.forEach(m => {
@@ -234,15 +232,12 @@
                 html += '</ul></div>';
             }
         });
-
         if (html === '') {
             html = '<p style="color:#7f8c8d; font-size: 15px; text-align:center; padding: 20px 0;">' + emptyMsg + '</p>';
         }
-
         document.getElementById('resultsContainer').innerHTML = html;
     }
 
-    // 날짜 텍스트에서 '월'만 뽑아내는 함수 (예: "7/8" -> 7)
     function extractMonth(dateStr) {
         if (!dateStr) return -1;
         dateStr = dateStr.replace(/\s/g, '');
@@ -251,7 +246,7 @@
         return -1;
     }
 
-    // --- 3. 전체 달력 보기 (셀 안에 이름 표시 기능) ---
+    // --- 전체 달력 보기 ---
     async function initCalendar() {
         currentCalYear = new Date().getFullYear();
         currentCalMonth = new Date().getMonth() + 1;
@@ -274,12 +269,9 @@
         showLoading(true);
         try {
             if (!globalSheetData) await fetchSheetData();
-
             const calendarHtml = buildCalendarHTML(currentCalYear, currentCalMonth, globalSheetData, globalHeaders);
-            
             document.getElementById('calendarTitle').innerText = currentCalYear + '년 ' + currentCalMonth + '월';
             document.getElementById('calendarContainer').innerHTML = calendarHtml;
-            
             switchScreen('calendarScreen');
         } catch (error) {
             alert('오류 발생: ' + error.message);
@@ -300,7 +292,6 @@
             if (i < firstDay || dayCount > daysInMonth) {
                 html += '<td></td>';
             } else {
-                // 달력 칸(셀) 안에 해당 날짜의 감독 선생님을 찾아 출력합니다!
                 const dayDataHtml = findDataForCalendar(rows, month, dayCount, headers);
                 html += '<td><div class="cal-date">' + dayCount + '</div>' + dayDataHtml + '</td>';
                 dayCount++;
@@ -311,6 +302,7 @@
         return html;
     }
 
+    // ★ 층별 묶기(그룹화) 및 색상 구분 적용 ★
     function findDataForCalendar(rows, month, day, headers) {
         let result = '';
         const searchStr1 = month + '/' + day;
@@ -323,20 +315,76 @@
             const sheetDate = row[0].replace(/\s/g, ''); 
             
             if (sheetDate === searchStr1 || sheetDate === searchStr2 || sheetDate.includes(month + '월' + day + '일')) {
-                // 해당 날짜를 찾으면, 배정된 모든 장소와 이름을 칸(셀) 안에 차곡차곡 담습니다.
+                
+                let groups = {}; // 층별로 사람을 모아둘 공간
+                let bigoList = []; // 비고는 따로 모음
+
                 for (let j = 2; j < row.length; j++) {
                     if (row[j] && row[j].trim() !== '') {
-                        let loc = headers[j] ? headers[j] : '기타';
-                        result += '<div class="cal-item"><b>' + loc + '</b>' + row[j] + '</div>';
+                        let loc = headers[j] ? headers[j].trim() : '기타';
+                        
+                        if (loc.includes('비고')) {
+                            bigoList.push(row[j]);
+                        } else {
+                            // 층 이름(baseLoc)과 세부 시간대(timeMark) 분리
+                            let baseLoc = loc;
+                            let timeMark = '';
+                            
+                            if (loc.includes('2층')) { baseLoc = '2층'; timeMark = loc.replace('2층', '').replace(/[\(\)]/g, '').trim(); }
+                            else if (loc.includes('3층')) { baseLoc = '3층'; timeMark = loc.replace('3층', '').replace(/[\(\)]/g, '').trim(); }
+                            else if (loc.includes('4층')) { baseLoc = '4층'; timeMark = loc.replace('4층', '').replace(/[\(\)]/g, '').trim(); }
+                            else if (loc.includes('사감')) { baseLoc = '사감'; timeMark = loc.replace('사감', '').replace(/[\(\)]/g, '').trim(); }
+                            
+                            if (!groups[baseLoc]) groups[baseLoc] = [];
+                            
+                            // 이름 뒤에 (오후), (야간) 등 시간이 있으면 붙여주기
+                            let nameText = row[j].trim();
+                            if (timeMark) {
+                                nameText += `(${timeMark})`;
+                            }
+                            
+                            groups[baseLoc].push(nameText);
+                        }
                     }
                 }
+
+                // 2층, 3층, 4층, 사감 순서대로 출력 정렬
+                const locOrder = ['2층', '3층', '4층', '사감'];
+                const allLocs = Object.keys(groups);
+                const sortedLocs = locOrder.filter(l => allLocs.includes(l)).concat(allLocs.filter(l => !locOrder.includes(l)));
+
+                // 모아둔 사람들을 하나의 박스로 만들어서 출력
+                for (let baseLoc of sortedLocs) {
+                    // 같은 층 사람들을 쉼표(,)로 묶어서 하나의 텍스트로 만듦
+                    let namesStr = groups[baseLoc].join(', ');
+                    
+                    let textColor = '#333';
+                    let bgColor = '#f8f9fa';
+                    let borderColor = '#ccc';
+                    let titleColor = '#555';
+
+                    if (baseLoc === '2층') {
+                        textColor = 'black'; bgColor = '#fdfdfd'; borderColor = '#333'; titleColor = 'black';
+                    } else if (baseLoc === '3층') {
+                        textColor = '#0056b3'; bgColor = '#e3f2fd'; borderColor = '#0056b3'; titleColor = '#0056b3';
+                    } else if (baseLoc === '4층') {
+                        textColor = '#198754'; bgColor = '#e8f5e9'; borderColor = '#198754'; titleColor = '#198754';
+                    }
+
+                    result += `<div class="cal-item" style="color: ${textColor}; background-color: ${bgColor}; border-left-color: ${borderColor};"><b style="color: ${titleColor};">${baseLoc}</b>${namesStr}</div>`;
+                }
+                
+                // 비고란 출력 (상자 없이 빨간 글씨)
+                if (bigoList.length > 0) {
+                    result += `<div style="color: #e74c3c; font-size: 11.5px; font-weight: bold; margin-top: 4px; text-align: left; word-break: keep-all;">${bigoList.join(', ')}</div>`;
+                }
+
                 break; 
             }
         }
         return result;
     }
 
-    // --- 공통 화면 전환 함수 ---
     function showLoading(show) {
         document.getElementById('loading').style.display = show ? 'block' : 'none';
     }
