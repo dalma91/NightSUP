@@ -5,99 +5,235 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>야간자율학습 감독일자 확인</title>
     <style>
-        body { font-family: 'Malgun Gothic', sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-        h1 { font-size: 20px; color: #333; margin-bottom: 20px; }
-        input[type="text"] { width: 80%; padding: 10px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; text-align: center; }
-        button { background-color: #4CAF50; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 5px; cursor: pointer; width: 85%; }
-        button:hover { background-color: #45a049; }
+        body { font-family: 'Malgun Gothic', sans-serif; background-color: #f4f7f6; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 95%; max-width: 800px; text-align: center; }
+        
+        /* 메인 화면 스타일 */
+        h1 { font-size: 22px; color: #333; margin-bottom: 20px; }
+        .input-group { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
+        input[type="text"] { width: 70%; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; text-align: center; }
+        button { background-color: #4CAF50; color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 5px; cursor: pointer; width: 75%; font-weight: bold; margin-bottom: 10px;}
+        button.cal-btn { background-color: #3498db; }
+        button:hover { opacity: 0.9; }
+        
+        /* 로딩 및 공통 버튼 */
+        #loading { display: none; color: #e67e22; font-weight: bold; font-size: 15px; margin-top: 15px; }
+        .back-btn { background-color: #7f8c8d; width: auto; padding: 10px 30px; margin-top: 20px; }
+        
+        /* 리스트 보기(개인 일정) 스타일 */
         .result-area { display: none; text-align: left; }
         .month-section { margin-bottom: 20px; }
         .month-title { font-weight: bold; font-size: 18px; color: #2c3e50; border-bottom: 2px solid #4CAF50; padding-bottom: 5px; margin-bottom: 10px; }
         .date-list { list-style-type: none; padding: 0; margin: 0; }
         .date-list li { background: #e8f5e9; margin-bottom: 8px; padding: 12px; border-radius: 5px; color: #333; font-size: 15px; }
         .location-text { color: #d35400; font-weight: bold; }
-        .back-btn { background-color: #888; margin-top: 20px; }
-        #loading { display: none; color: #666; font-size: 14px; margin-top: 10px; }
+        
+        /* 달력 보기(전체 일정) 스타일 */
+        #calendarScreen { display: none; }
+        .calendar-table { width: 100%; border-collapse: collapse; margin-top: 10px; table-layout: fixed; }
+        .calendar-table th, .calendar-table td { border: 1px solid #ddd; padding: 5px; vertical-align: top; height: 90px; overflow: hidden; }
+        .calendar-table th { background-color: #f8f9fa; text-align: center; height: auto; padding: 10px 0; font-size: 14px; }
+        .calendar-table th:first-child, .calendar-table td:first-child { color: red; } /* 일요일 빨간색 */
+        .calendar-table th:last-child, .calendar-table td:last-child { color: blue; } /* 토요일 파란색 */
+        .cal-date { font-weight: bold; margin-bottom: 5px; text-align: left; font-size: 14px; }
+        .cal-item { background: #e3f2fd; color: #0277bd; font-size: 11px; padding: 3px; margin-bottom: 3px; border-radius: 3px; text-align: left; word-break: keep-all; line-height: 1.2; border-left: 3px solid #0288d1; }
+        .cal-item b { color: #333; font-size: 10px; display: block; margin-bottom: 1px; }
+
+        @media (max-width: 600px) {
+            .calendar-table th, .calendar-table td { padding: 2px; height: 80px; }
+            .cal-item { font-size: 10px; padding: 2px; }
+            .cal-date { font-size: 12px; }
+        }
     </style>
 </head>
 <body>
 
+<!-- 메인 화면 -->
 <div class="container" id="loginScreen">
-    <h1>야간자율학습 감독 확인</h1>
-    <input type="text" id="teacherName" placeholder="선생님 성함을 입력하세요">
-    <button onclick="checkDates()">감독일자 확인</button>
-    <div id="loading">데이터를 불러오는 중입니다...</div>
+    <h1>🏫 야간자율학습 감독 확인</h1>
+    
+    <div class="input-group">
+        <input type="text" id="teacherName" placeholder="선생님 성함을 입력하세요">
+        <button onclick="checkDates()">내 일정 리스트로 검색</button>
+    </div>
+    
+    <div>
+        <button class="cal-btn" onclick="showFullCalendar()">이번 달 전체 달력 보기</button>
+    </div>
+    
+    <div id="loading">데이터를 불러오는 중입니다... 잠시만 기다려주세요.</div>
 </div>
 
+<!-- 개인 리스트 결과 화면 -->
 <div class="container result-area" id="resultScreen">
     <h1 id="resultTitle"></h1>
     <div id="resultsContainer"></div>
-    <button class="back-btn" onclick="goBack()">다시 검색하기</button>
+    <div style="text-align: center;">
+        <button class="back-btn" onclick="goBack()">돌아가기</button>
+    </div>
+</div>
+
+<!-- 전체 달력 화면 -->
+<div class="container" id="calendarScreen">
+    <h1 id="calendarTitle"></h1>
+    <div id="calendarContainer"></div>
+    <div style="text-align: center;">
+        <button class="back-btn" onclick="goBack()">돌아가기</button>
+    </div>
 </div>
 
 <script>
-    // [설정] 구글 스프레드시트 ID
     const SHEET_ID = '1nKjVnDDEWXcRGo4ka6aYb7U3mxZ7ouSJD-qmSmQImKY';
-    
-    // [중요] 선생님의 구글 API 키 적용 완료
     const API_KEY = 'AIzaSyBzE09gR37WosPsArNy-IXhwsgUWqtEu7M'; 
 
+    // --- 1. 개인 일정 리스트 검색 기능 ---
     async function checkDates() {
         const nameInput = document.getElementById('teacherName').value.trim();
         if (!nameInput) {
             alert('이름을 입력해주세요.');
             return;
         }
-
-        document.getElementById('loading').style.display = 'block';
-
+        showLoading(true);
         try {
-            const metaUrl = 'https://sheets.googleapis.com/v4/spreadsheets/' + SHEET_ID + '?key=' + API_KEY;
-            const metaResponse = await fetch(metaUrl);
-            const metaData = await metaResponse.json();
-            
-            if (metaData.error) throw new Error(metaData.error.message);
-
-            const sheetTitles = metaData.sheets.map(function(sheet) {
-                return sheet.properties.title;
-            });
-
+            const sheetTitles = await getSheetTitles();
             const now = new Date();
             const currentMonthNum = now.getMonth() + 1;
             const nextMonthNum = currentMonthNum === 12 ? 1 : currentMonthNum + 1;
 
-            const currentMonthSheet = sheetTitles.find(function(t) { return t.includes(currentMonthNum + '월'); });
-            const nextMonthSheet = sheetTitles.find(function(t) { return t.includes(nextMonthNum + '월'); });
+            const currentMonthSheet = sheetTitles.find(t => t.includes(currentMonthNum + '월'));
+            const nextMonthSheet = sheetTitles.find(t => t.includes(nextMonthNum + '월'));
 
             let finalHtml = '';
-
             if (currentMonthSheet) {
                 const dates = await fetchSheetAndFindDates(currentMonthSheet, nameInput);
                 finalHtml += buildMonthHtml(currentMonthNum + '월', dates);
-            } else {
-                finalHtml += buildMonthHtml(currentMonthNum + '월', null);
             }
-
             if (nextMonthSheet) {
                 const dates = await fetchSheetAndFindDates(nextMonthSheet, nameInput);
                 finalHtml += buildMonthHtml(nextMonthNum + '월', dates);
-            } else {
-                finalHtml += buildMonthHtml(nextMonthNum + '월', null);
             }
 
             document.getElementById('resultTitle').innerText = nameInput + ' 선생님 감독일정';
-            document.getElementById('resultsContainer').innerHTML = finalHtml;
+            document.getElementById('resultsContainer').innerHTML = finalHtml || '<p>검색 결과가 없습니다.</p>';
             
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('resultScreen').style.display = 'block';
-
+            switchScreen('resultScreen');
         } catch (error) {
-            console.error(error);
-            alert('데이터를 가져오는데 실패했습니다. API 키나 공유 설정을 확인해주세요.\n' + error.message);
+            alert('오류 발생: ' + error.message);
         } finally {
-            document.getElementById('loading').style.display = 'none';
+            showLoading(false);
         }
+    }
+
+    // --- 2. 이번 달 전체 달력 보기 기능 ---
+    async function showFullCalendar() {
+        showLoading(true);
+        try {
+            const sheetTitles = await getSheetTitles();
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth() + 1; // 1~12
+
+            const currentMonthSheet = sheetTitles.find(t => t.includes(month + '월'));
+            
+            if (!currentMonthSheet) {
+                alert(month + '월 시트가 스프레드시트에 존재하지 않습니다.');
+                showLoading(false);
+                return;
+            }
+
+            // 시트 데이터 전체 가져오기
+            const dataUrl = 'https://sheets.googleapis.com/v4/spreadsheets/' + SHEET_ID + '/values/' + currentMonthSheet + '!A:Z?key=' + API_KEY;
+            const response = await fetch(dataUrl);
+            const json = await response.json();
+            const rows = json.values;
+
+            if (!rows || rows.length < 2) {
+                alert('시트에 데이터가 부족합니다.');
+                showLoading(false);
+                return;
+            }
+
+            const headers = rows[0]; // 1행 (장소들)
+            
+            // 달력 HTML 생성
+            const calendarHtml = buildCalendarHTML(year, month, rows, headers);
+            
+            document.getElementById('calendarTitle').innerText = year + '년 ' + month + '월 감독표';
+            document.getElementById('calendarContainer').innerHTML = calendarHtml;
+            
+            switchScreen('calendarScreen');
+        } catch (error) {
+            alert('오류 발생: ' + error.message);
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // --- 달력 HTML 구조를 그리는 함수 ---
+    function buildCalendarHTML(year, month, rows, headers) {
+        const firstDay = new Date(year, month - 1, 1).getDay(); // 0(일) ~ 6(토)
+        const daysInMonth = new Date(year, month, 0).getDate(); // 해당 월의 총 일수
+
+        let html = '<table class="calendar-table">';
+        html += '<tr><th>일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th></tr><tr>';
+
+        let dayCount = 1;
+        // 최대 6주(42일) 칸 생성
+        for (let i = 0; i < 42; i++) {
+            if (i < firstDay || dayCount > daysInMonth) {
+                html += '<td></td>'; // 빈 칸
+            } else {
+                // 해당 날짜의 데이터(감독 선생님들) 찾기
+                const dayDataHtml = findDataForCalendar(rows, month, dayCount, headers);
+                html += '<td><div class="cal-date">' + dayCount + '</div>' + dayDataHtml + '</td>';
+                dayCount++;
+            }
+            
+            // 토요일(인덱스 6, 13, 20...)마다 줄바꿈
+            if ((i + 1) % 7 === 0) {
+                html += '</tr><tr>';
+            }
+        }
+        html += '</tr></table>';
+        return html;
+    }
+
+    // --- 달력의 각 칸(날짜)에 들어갈 데이터를 시트에서 찾는 함수 ---
+    function findDataForCalendar(rows, month, day, headers) {
+        let result = '';
+        // 시트의 날짜 형식이 다양할 수 있으므로 여러 형태로 검사 (예: "7/1", "7.1", "7월1일")
+        const searchStr1 = month + '/' + day;
+        const searchStr2 = month + '.' + day;
+        
+        for (let i = 1; i < rows.length; i++) {
+            const row = rows[i];
+            if (!row || !row[0]) continue;
+            
+            const sheetDate = row[0].replace(/\s/g, ''); // 공백 제거
+            
+            // 해당 날짜를 찾으면
+            if (sheetDate.includes(searchStr1) || sheetDate.includes(searchStr2) || sheetDate.includes(month + '월' + day + '일')) {
+                
+                // C열(인덱스 2)부터 감독 선생님 이름 추출 (B열은 요일로 가정)
+                for (let j = 2; j < row.length; j++) {
+                    if (row[j] && row[j].trim() !== '') {
+                        let loc = headers[j] ? headers[j] : '기타';
+                        result += '<div class="cal-item"><b>' + loc + '</b>' + row[j] + '</div>';
+                    }
+                }
+                break; // 날짜를 찾았으므로 더 이상 해당 행 반복 안함
+            }
+        }
+        return result;
+    }
+
+    // --- 공통 유틸리티 함수들 ---
+    async function getSheetTitles() {
+        const metaUrl = 'https://sheets.googleapis.com/v4/spreadsheets/' + SHEET_ID + '?key=' + API_KEY;
+        const metaResponse = await fetch(metaUrl);
+        const metaData = await metaResponse.json();
+        if (metaData.error) throw new Error(metaData.error.message);
+        return metaData.sheets.map(sheet => sheet.properties.title);
     }
 
     async function fetchSheetAndFindDates(sheetName, targetName) {
@@ -105,32 +241,20 @@
         const response = await fetch(dataUrl);
         const json = await response.json();
         const rows = json.values;
-        
         let foundDates = [];
-        
         if (!rows || rows.length === 0) return foundDates;
-
         const headers = rows[0];
 
         for (let i = 1; i < rows.length; i++) {
             const row = rows[i];
             if (!row || row.length === 0) continue;
-            
             for (let j = 1; j < row.length; j++) {
                 if (row[j] && row[j].replace(/\s/g, '').includes(targetName.replace(/\s/g, ''))) {
-                    
                     let date = row[0] ? row[0] : '';
                     let day = '';
                     let location = headers[j] ? headers[j] : j + '열';
-                    
-                    if (j >= 2 && row[1] && row[1].length <= 3) {
-                        day = row[1];
-                    }
-
-                    let displayText = date;
-                    if (day) displayText += ' (' + day + ')';
-                    if (location) displayText += ' ➡️ <span class="location-text">' + location + '</span>';
-
+                    if (j >= 2 && row[1] && row[1].length <= 3) day = row[1];
+                    let displayText = date + (day ? ' (' + day + ')' : '') + ' ➡️ <span class="location-text">' + location + '</span>';
                     foundDates.push(displayText);
                     break;
                 }
@@ -141,25 +265,30 @@
 
     function buildMonthHtml(monthLabel, dates) {
         let html = '<div class="month-section"><div class="month-title">' + monthLabel + '</div>';
-        if (!dates) {
-            html += '<p style="color:#7f8c8d; font-size: 14px;">해당 월의 시트가 존재하지 않습니다.</p>';
-        } else if (dates.length === 0) {
+        if (!dates || dates.length === 0) {
             html += '<p style="color:#7f8c8d; font-size: 14px;">배정된 감독일이 없습니다.</p>';
         } else {
             html += '<ul class="date-list">';
-            for (let i = 0; i < dates.length; i++) {
-                html += '<li>' + dates[i] + '</li>';
-            }
+            for (let i = 0; i < dates.length; i++) html += '<li>' + dates[i] + '</li>';
             html += '</ul>';
         }
         html += '</div>';
         return html;
     }
 
-    function goBack() {
-        document.getElementById('teacherName').value = '';
+    function showLoading(show) {
+        document.getElementById('loading').style.display = show ? 'block' : 'none';
+    }
+
+    function switchScreen(screenId) {
+        document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('resultScreen').style.display = 'none';
-        document.getElementById('loginScreen').style.display = 'block';
+        document.getElementById('calendarScreen').style.display = 'none';
+        document.getElementById(screenId).style.display = 'block';
+    }
+
+    function goBack() {
+        switchScreen('loginScreen');
     }
 </script>
 
