@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>야간자율학습 감독일자 확인</title>
+    <style>
+        body { font-family: 'Malgun Gothic', sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        h1 { font-size: 20px; color: #333; margin-bottom: 20px; }
+        input[type="text"] { width: 80%; padding: 10px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; text-align: center; }
+        button { background-color: #4CAF50; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 5px; cursor: pointer; width: 85%; }
+        button:hover { background-color: #45a049; }
+        .result-area { display: none; text-align: left; }
+        .month-section { margin-bottom: 20px; }
+        .month-title { font-weight: bold; font-size: 18px; color: #2c3e50; border-bottom: 2px solid #4CAF50; padding-bottom: 5px; margin-bottom: 10px; }
+        .date-list { list-style-type: none; padding: 0; margin: 0; }
+        .date-list li { background: #e8f5e9; margin-bottom: 5px; padding: 10px; border-radius: 5px; color: #333; }
+        .back-btn { background-color: #888; margin-top: 20px; }
+        #loading { display: none; color: #666; font-size: 14px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="loginScreen">
+    <h1>야간자율학습 감독 확인</h1>
+    <input type="text" id="teacherName" placeholder="선생님 성함을 입력하세요">
+    <button onclick="checkDates()">감독일자 확인</button>
+    <div id="loading">데이터를 불러오는 중입니다...</div>
+</div>
+
+<div class="container result-area" id="resultScreen">
+    <h1 id="resultTitle"></h1>
+    <div id="resultsContainer"></div>
+    <button class="back-btn" onclick="goBack()">다시 검색하기</button>
+</div>
+
+<script>
+    // [설정] 구글 스프레드시트 ID (URL에서 추출)
+    const SHEET_ID = '1nKjVnDDEWXcRGo4ka6aYb7U3mxZ7ouSJD-qmSmQImKY';
+    
+    // [중요] Google Cloud Console에서 발급받은 API 키를 여기에 입력하세요.
+    const API_KEY = 'YOUR_GOOGLE_API_KEY_HERE'; 
+
+    async function checkDates() {
+        const nameInput = document.getElementById('teacherName').value.trim();
+        if (!nameInput) {
+            alert('이름을 입력해주세요.');
+            return;
+        }
+
+        document.getElementById('loading').style.display = 'block';
+
+        try {
+            // 1. 스프레드시트 메타데이터를 가져와 시트(탭) 이름들을 읽습니다.
+            const metaUrl = 'https://sheets.googleapis.com/v4/spreadsheets/' + SHEET_ID + '?key=' + API_KEY;
+            const metaResponse = await fetch(metaUrl);
+            const metaData = await metaResponse.json();
+            
+            if (metaData.error) throw new Error(metaData.error.message);
+
+            const sheetTitles = metaData.sheets.map(function(sheet) {
+                return sheet.properties.title;
+            });
+
+            // 2. 현재 달과 다음 달 계산
+            const now = new Date();
+            const currentMonthNum = now.getMonth() + 1;
+            const nextMonthNum = currentMonthNum === 12 ? 1 : currentMonthNum + 1;
+
+            // 시트 이름에서 해당 월 찾기 (예: "7월", "8월"이 포함된 시트)
+            const currentMonthSheet = sheetTitles.find(function(t) { return t.includes(currentMonthNum + '월'); });
+            const nextMonthSheet = sheetTitles.find(function(t) { return t.includes(nextMonthNum + '월'); });
+
+            let finalHtml = '';
+
+            // 3. 현재 월 데이터 조회
+            if (currentMonthSheet) {
+                const dates = await fetchSheetAndFindDates(currentMonthSheet, nameInput);
+                finalHtml += buildMonthHtml(currentMonthNum + '월', dates);
+            } else {
+                finalHtml += buildMonthHtml(currentMonthNum + '월', null);
+            }
+
+            // 4. 다음 월 데이터 조회
+            if (nextMonthSheet) {
+                const dates = await fetchSheetAndFindDates(nextMonthSheet, nameInput);
+                finalHtml += buildMonthHtml(nextMonthNum + '월', dates);
+            } else {
+                finalHtml += buildMonthHtml(nextMonthNum + '월', null);
+            }
+
+            // 5. 결과 화면 출력
+            document.getElementById('resultTitle').innerText = nameInput + ' 선생님 감독일자';
+            document.getElementById('resultsContainer').innerHTML = finalHtml;
+            
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('resultScreen').style.display = 'block';
+
+        } catch (error) {
+            console.error(error);
+            alert('데이터를 가져오는데 실패했습니다. API 키나 공유 설정을 확인해주세요.\n' + error.message);
+        } finally {
+            document.getElementById('loading').style.display = 'none';
+        }
+    }
+
+    // 특정 시트의 데이터를 가져와 이름을 검색하는 함수
+    async function fetchSheetAndFindDates(sheetName, targetName) {
+        const dataUrl = 'https://sheets.googleapis.com/v4/spreadsheets/' + SHEET_ID + '/values/' + sheetName + '!A:Z?key=' + API_KEY;
+        const response = await fetch(dataUrl);
+        const json = await response.json();
+        const rows = json.values;
+        
+        let foundDates = [];
+        
+        if (!rows) return foundDates;
+
+        // 행(Row) 반복 검색
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            if (!row || row.length === 0) continue;
+            
+            // B열(인덱스 1)부터 검색
+            for (let j = 1; j < row.length; j++) {
+                if (row[j] && row[j].replace(/\s/g, '').includes(targetName.replace(/\s/g, ''))) {
+                    // 이름이 있으면 A열(인덱스 0)의 날짜를 저장
+                    if (row[0]) foundDates.push(row[0]);
+                    break;
+                }
+            }
+        }
+        return foundDates;
+    }
+
+    // 결과를 HTML 구조로 만들어주는 함수
+    function buildMonthHtml(monthLabel, dates) {
+        let html = '<div class="month-section"><div class="month-title">' + monthLabel + '</div>';
+        if (!dates) {
+            html += '<p style="color:#7f8c8d; font-size: 14px;">해당 월의 시트가 존재하지 않습니다.</p>';
+        } else if (dates.length === 0) {
+            html += '<p style="color:#7f8c8d; font-size: 14px;">배정된 감독일이 없습니다.</p>';
+        } else {
+            html += '<ul class="date-list">';
+            for (let i = 0; i < dates.length; i++) {
+                html += '<li>' + dates[i] + '</li>';
+            }
+            html += '</ul>';
+        }
+        html += '</div>';
+        return html;
+    }
+
+    function goBack() {
+        document.getElementById('teacherName').value = '';
+        document.getElementById('resultScreen').style.display = 'none';
+        document.getElementById('loginScreen').style.display = 'block';
+    }
+</script>
+
+</body>
+</html>
