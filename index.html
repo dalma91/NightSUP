@@ -8,7 +8,7 @@
         body { font-family: 'Malgun Gothic', sans-serif; background-color: #f4f7f6; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         .container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 95%; max-width: 800px; text-align: center; }
         
-        /* 캘린더 화면일 때는 화면 폭을 더 넓게 씁니다! */
+        /* 캘린더 화면일 때는 화면 폭을 넓게 씁니다! */
         #calendarScreen { max-width: 1200px; }
         
         /* 메인 화면 스타일 */
@@ -48,25 +48,19 @@
         .calendar-table th:last-child, .calendar-table td:last-child { color: blue; } 
         .cal-date { font-weight: bold; margin-bottom: 5px; text-align: left; font-size: 15px; }
         
-        /* 달력 내부 아이템 (장소와 이름을 가로 배치하도록 flex 적용) */
+        /* 달력 내부 아이템 */
         .cal-item { 
-            font-size: 12px; 
-            padding: 5px 8px; 
-            margin-bottom: 5px; 
-            border-radius: 5px; 
-            text-align: left; 
-            word-break: keep-all; 
+            border-radius: 4px; 
+            margin-bottom: 4px;
             border-left: 4px solid #ccc; 
             display: flex; 
             align-items: center; 
-            flex-wrap: wrap; 
+            padding: 4px;
         }
-        .cal-item b { font-size: 13px; margin-right: 8px; white-space: nowrap; }
 
         @media (max-width: 768px) {
             .calendar-table th, .calendar-table td { padding: 3px; height: 90px; }
-            .cal-item { font-size: 11px; padding: 4px; }
-            .cal-item b { font-size: 12px; margin-right: 4px; }
+            .cal-item { padding: 3px; }
             .cal-date { font-size: 13px; }
         }
     </style>
@@ -93,10 +87,9 @@
 <div class="container result-area" id="resultScreen">
     <h1 id="resultTitle" style="text-align: center;"></h1>
     
-    <!-- 3월~2월 필터 버튼 -->
     <div class="month-filter-container" id="monthFilterContainer"></div>
-
     <div id="resultsContainer"></div>
+    
     <div style="text-align: center;">
         <button class="back-btn" onclick="goBack()">돌아가기</button>
     </div>
@@ -153,9 +146,7 @@
         const response = await fetch(dataUrl);
         const json = await response.json();
 
-        if (!json.values || json.values.length < 2) {
-            throw new Error('시트에 데이터가 없습니다.');
-        }
+        if (!json.values || json.values.length < 2) throw new Error('시트에 데이터가 없습니다.');
 
         globalHeaders = json.values[0];
         globalSheetData = json.values;
@@ -317,7 +308,7 @@
         return html;
     }
 
-    // ★ 층 옆 가로배치 & 오후/야간을 위로 올린 뷰 구현 ★
+    // ★ 감독이 2명 이상일 때만 상단에 오후/야간 헤더 표시 및 층 글자 숨김 적용 ★
     function findDataForCalendar(rows, month, day, headers) {
         let result = '';
         const searchStr1 = month + '/' + day;
@@ -333,6 +324,7 @@
                 
                 let groups = {}; 
                 let bigoList = []; 
+                let dayTimeMarks = [];
 
                 for (let j = 2; j < row.length; j++) {
                     if (row[j] && row[j].trim() !== '') {
@@ -349,68 +341,81 @@
                             else if (loc.includes('4층')) { baseLoc = '4층'; timeMark = loc.replace('4층', '').replace(/[\(\)]/g, '').trim(); }
                             else if (loc.includes('사감')) { baseLoc = '사감'; timeMark = loc.replace('사감', '').replace(/[\(\)]/g, '').trim(); }
                             
+                            // 해당 날짜에 존재하는 모든 시간대(오후, 야간 등) 수집
+                            if (timeMark && !dayTimeMarks.includes(timeMark)) {
+                                dayTimeMarks.push(timeMark);
+                            }
+
                             if (!groups[baseLoc]) groups[baseLoc] = [];
-                            
-                            groups[baseLoc].push({
-                                name: row[j].trim(),
-                                timeMark: timeMark
-                            });
+                            groups[baseLoc].push({ name: row[j].trim(), timeMark: timeMark });
                         }
                     }
                 }
 
-                // 1. 비고란 최상단 출력
-                if (bigoList.length > 0) {
-                    result += `<div style="color: #e74c3c; font-size: 13px; font-weight: bold; margin-bottom: 6px; text-align: left; word-break: keep-all;">${bigoList.join(', ')}</div>`;
+                // 해당 날짜에서 '가장 인원이 많은 층'의 감독 수 계산 (2명이상 여부 파악)
+                let maxSupervisors = 0;
+                for (let loc in groups) {
+                    if (groups[loc].length > maxSupervisors) {
+                        maxSupervisors = groups[loc].length;
+                    }
                 }
 
+                // 2명 이상 배정된 날에만 헤더(오후/야간) 표시
+                let showTimeHeaders = maxSupervisors >= 2;
+
+                // 1. 비고 & 상단 헤더 렌더링
+                let topHeaderHtml = `<div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom: 5px; min-height: 16px;">`;
+                let bigoStr = bigoList.join(', ');
+                
+                topHeaderHtml += `<div style="color: #e74c3c; font-size: 12px; font-weight: bold; word-break: keep-all; padding-right: 4px;">${bigoStr}</div>`;
+                
+                // 감독이 2명 이상이라 헤더가 필요한 경우
+                if (showTimeHeaders) {
+                    topHeaderHtml += `<div style="display:flex; gap:5px; justify-content:flex-end;">`;
+                    dayTimeMarks.forEach(tm => {
+                        topHeaderHtml += `<div style="width:45px; text-align:center; font-size:11.5px; color:#555; font-weight:bold;">${tm}</div>`;
+                    });
+                    topHeaderHtml += `</div>`;
+                }
+                topHeaderHtml += `</div>`;
+                
+                result += topHeaderHtml;
+
+                // 2. 층별 이름 출력 (층 글자는 삭제, 표 형태 가로 정렬)
                 const locOrder = ['2층', '3층', '4층', '사감'];
                 const allLocs = Object.keys(groups);
                 const sortedLocs = locOrder.filter(l => allLocs.includes(l)).concat(allLocs.filter(l => !locOrder.includes(l)));
 
-                // 2. 층별 사람 출력
                 for (let baseLoc of sortedLocs) {
                     let group = groups[baseLoc];
-                    let hasTimeMark = group.some(g => g.timeMark !== '');
-                    let namesHtml = '';
-
-                    // 한 층에 감독이 2명 이상이면서 오후/야간 등의 시간 표기가 있는 경우 (요청하신 이미지 형태)
-                    if (group.length > 1 && hasTimeMark) {
-                        let colsHtml = group.map(g => `
-                            <div style="display:flex; flex-direction:column; align-items:center; padding: 0 7px;">
-                                <span style="font-size:11px; color:#888; margin-bottom:2px;">${g.timeMark || '-'}</span>
-                                <span style="font-weight:bold;">${g.name}</span>
-                            </div>
-                        `).join('');
-                        namesHtml = `<div style="display:flex; align-items:center;">${colsHtml}</div>`;
-                    } 
-                    // 일반적인 경우 (1명만 있거나 시간 구분이 없을 때)
-                    else {
-                        let namesStr = group.map(g => {
-                            if (g.timeMark) return `<span style="font-weight:bold;">${g.name}(${g.timeMark})</span>`;
-                            return `<span style="font-weight:bold;">${g.name}</span>`;
-                        }).join(', ');
-                        namesHtml = `<div>${namesStr}</div>`;
-                    }
                     
-                    // 층별 색상 설정 (이전에 요청하신 2층 검정, 3층 파랑, 4층 녹색)
                     let textColor = '#333';
                     let bgColor = '#f8f9fa';
                     let borderColor = '#ccc';
-                    let titleColor = '#555';
 
-                    if (baseLoc === '2층') {
-                        textColor = 'black'; bgColor = '#fdfdfd'; borderColor = '#333'; titleColor = 'black';
-                    } else if (baseLoc === '3층') {
-                        textColor = '#0056b3'; bgColor = '#e3f2fd'; borderColor = '#0056b3'; titleColor = '#0056b3';
-                    } else if (baseLoc === '4층') {
-                        textColor = '#198754'; bgColor = '#e8f5e9'; borderColor = '#198754'; titleColor = '#198754';
+                    if (baseLoc === '2층') { textColor = 'black'; bgColor = '#fdfdfd'; borderColor = '#333'; } 
+                    else if (baseLoc === '3층') { textColor = '#0056b3'; bgColor = '#e3f2fd'; borderColor = '#0056b3'; } 
+                    else if (baseLoc === '4층') { textColor = '#198754'; bgColor = '#e8f5e9'; borderColor = '#198754'; }
+
+                    let namesHtml = `<div style="display:flex; gap:5px; justify-content:flex-end; width:100%;">`;
+
+                    // 헤더(오후/야간)가 있는 날이면 칸을 쪼개서 정렬
+                    if (showTimeHeaders) {
+                        dayTimeMarks.forEach(tm => {
+                            let person = group.find(g => g.timeMark === tm);
+                            let nameStr = person ? person.name : '';
+                            namesHtml += `<div style="width:45px; text-align:center; font-weight:bold; font-size:12.5px;">${nameStr}</div>`;
+                        });
+                    } 
+                    // 평소(감독 1명)인 날이면 중앙 정렬
+                    else {
+                        let nameStr = group.map(g => g.name).join(', ');
+                        namesHtml += `<div style="width:100%; text-align:center; font-weight:bold; font-size:12.5px;">${nameStr}</div>`;
                     }
+                    namesHtml += `</div>`;
 
-                    // 전체를 cal-item 하나로 감싸서 flex로 나란히 정렬합니다.
                     result += `
                     <div class="cal-item" style="color: ${textColor}; background-color: ${bgColor}; border-left-color: ${borderColor};">
-                        <b style="color: ${titleColor};">[${baseLoc}]</b>
                         ${namesHtml}
                     </div>`;
                 }
