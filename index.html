@@ -17,7 +17,7 @@
         button { background-color: #4CAF50; color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 5px; cursor: pointer; width: 75%; font-weight: bold; margin-bottom: 10px;}
         button.cal-btn { background-color: #3498db; }
         button.admin-btn { background-color: #34495e; width: auto; font-size: 13px; padding: 8px 15px; margin-top: 15px;}
-        button.save-btn { background-color: #e74c3c; width: auto; padding: 10px 20px; }
+        button.save-btn { background-color: #e74c3c; width: auto; padding: 10px 20px; margin-left: auto; display: block; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
         button:hover { opacity: 0.9; }
         
         #loading { display: none; color: #e67e22; font-weight: bold; font-size: 15px; margin-top: 15px; }
@@ -46,10 +46,10 @@
         .cal-item { border-radius: 4px; margin-bottom: 4px; border-left: 4px solid #ccc; display: flex; align-items: center; padding: 4px; min-height: 25px; }
         
         /* 드래그 앤 드롭 전용 스타일 */
-        .draggable-name { cursor: grab; background-color: rgba(255,255,255,0.7); border: 1px dashed #aaa; padding: 2px 5px; border-radius: 3px; display: inline-block; margin: 2px; transition: 0.2s; }
+        .draggable-name { cursor: grab; background-color: rgba(255,255,255,0.8); border: 1px dashed #aaa; padding: 2px 5px; border-radius: 3px; display: inline-block; margin: 2px; transition: 0.2s; font-weight:bold; font-size:12.5px; z-index: 10;}
         .draggable-name:active { cursor: grabbing; opacity: 0.5; }
         .drop-zone { min-height: 25px; padding: 2px; flex-grow: 1; display: flex; flex-wrap: wrap; gap: 3px; align-items: center;}
-        .drop-zone.over { background-color: rgba(243, 156, 18, 0.2); border-radius: 4px; border: 1px dashed #f39c12;}
+        .drop-zone.over { background-color: rgba(243, 156, 18, 0.3); border-radius: 4px; border: 2px dashed #f39c12;}
 
         @media (max-width: 768px) {
             .calendar-table th, .calendar-table td { padding: 3px; height: 90px; }
@@ -106,11 +106,11 @@
     <div style="text-align: center;"><button class="back-btn" onclick="goBack()">돌아가기</button></div>
 </div>
 
-<!-- 관리자 전용 캘린더 (드래그 앤 드롭) 화면 -->
+<!-- 관리자 전용 캘린더 화면 -->
 <div class="container" id="adminScreen">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h1 style="color: #e74c3c;">🛠️ 관리자 모드 (드래그로 이동 가능)</h1>
-        <button class="save-btn" onclick="saveAdminChanges()">저장하기</button>
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 10px;">
+        <h1 style="color: #e74c3c; margin:0;">🛠️ 관리자 모드 (드래그 저장)</h1>
+        <button class="save-btn" onclick="saveAdminChanges()">💾 시트에 저장하기</button>
     </div>
     
     <div class="calendar-header">
@@ -123,31 +123,27 @@
 </div>
 
 <script>
-    // 새 스프레드시트 주소 적용
+    // ★★★ 아래 따옴표 안에 Step 1에서 복사한 웹앱 URL을 붙여넣으세요! ★★★
+    const GAS_URL = '여기에_웹앱_URL을_붙여넣으세요'; 
+
     const SHEET_ID = '1Y7cCXkLzGLbpy4RqYXljIy5a7RnWzYgp_J_ydatJiA4';
     const API_KEY = 'AIzaSyBzE09gR37WosPsArNy-IXhwsgUWqtEu7M'; 
 
     let currentCalYear = new Date().getFullYear();
     let currentCalMonth = new Date().getMonth() + 1;
-    
     let globalSheetData = null; 
     let globalHeaders = null;
     let searchDataByMonth = {}; 
 
-    window.onload = function() {
-        buildMonthButtons();
-    };
+    window.onload = function() { buildMonthButtons(); };
 
     function buildMonthButtons() {
         const order = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2];
         let html = '';
-        order.forEach(m => {
-            html += `<button class="month-btn" id="btn-month-${m}" onclick="filterByMonth(${m})">${m}월</button>`;
-        });
+        order.forEach(m => { html += `<button class="month-btn" id="btn-month-${m}" onclick="filterByMonth(${m})">${m}월</button>`; });
         document.getElementById('monthFilterContainer').innerHTML = html;
     }
 
-    // 특정 시트 이름을 지정해서 데이터를 가져오는 공통 함수
     async function fetchSpecificSheet(sheetName) {
         const dataUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${sheetName}!A:Z?key=${API_KEY}`;
         const response = await fetch(dataUrl);
@@ -156,7 +152,6 @@
         return json.values;
     }
 
-    // 데이터 초기화 (감독표 시트 전용)
     async function initSupervisorData() {
         if (!globalSheetData) {
             const data = await fetchSpecificSheet('감독표');
@@ -165,56 +160,116 @@
         }
     }
 
-    // --- 관리자 로그인 로직 ---
     async function adminLogin() {
         const adminId = document.getElementById('adminId').value.trim();
         const adminPw = document.getElementById('adminPw').value.trim();
-        
-        if (!adminId || !adminPw) {
-            alert('이름과 비밀번호를 모두 입력해주세요.');
-            return;
-        }
+        if (!adminId || !adminPw) { alert('이름과 비밀번호를 모두 입력해주세요.'); return; }
 
         showLoading(true);
         try {
-            // '관리자' 시트에서 데이터 확인
             const adminData = await fetchSpecificSheet('관리자');
             let isSuccess = false;
-            
-            // 2번째 줄(인덱스 1)부터 검사 (1행은 제목이라고 가정)
             for (let i = 1; i < adminData.length; i++) {
-                let sheetId = adminData[i][0] ? adminData[i][0].trim() : '';
-                let sheetPw = adminData[i][1] ? adminData[i][1].trim() : '';
-                
-                if (sheetId === adminId && sheetPw === adminPw) {
-                    isSuccess = true;
-                    break;
+                if ((adminData[i][0]||'').trim() === adminId && (adminData[i][1]||'').trim() === adminPw) {
+                    isSuccess = true; break;
+                }
+            }
+            if (isSuccess) {
+                alert('관리자 로그인 성공!');
+                document.getElementById('adminId').value = ''; document.getElementById('adminPw').value = '';
+                initCalendar(true); 
+            } else { alert('이름 또는 비밀번호가 일치하지 않습니다.'); }
+        } catch (error) { alert('오류 발생: ' + error.message); } finally { showLoading(false); }
+    }
+
+    // --- ★ 새로운 저장 기능 (GAS 연동) ★ ---
+    async function saveAdminChanges() {
+        if (GAS_URL.includes('여기에_웹앱_URL을')) {
+            alert('에러: 소스 코드에 GAS 웹앱 URL이 입력되지 않았습니다!');
+            return;
+        }
+        
+        if(!confirm('화면에 보이는 배치 상태로 구글 스프레드시트에 저장하시겠습니까?')) return;
+
+        showLoading(true);
+        try {
+            // 1. 원본 데이터 깊은 복사 후 감독 이름 칸 비우기 (비고란 제외)
+            let newData = JSON.parse(JSON.stringify(globalSheetData));
+            for (let i = 1; i < newData.length; i++) {
+                for (let j = 2; j < newData[i].length; j++) {
+                    if (globalHeaders[j] && !globalHeaders[j].includes('비고')) {
+                        newData[i][j] = ''; // 기존 배정 초기화
+                    }
                 }
             }
 
-            if (isSuccess) {
-                alert('관리자 로그인 성공!');
-                document.getElementById('adminId').value = '';
-                document.getElementById('adminPw').value = '';
-                initCalendar(true); // 관리자용 캘린더 화면 열기
+            // 2. 현재 달력 화면의 드래그 항목을 읽어 데이터 재구성
+            const draggables = document.querySelectorAll('.draggable-name');
+            draggables.forEach(el => {
+                const dropZone = el.closest('.drop-zone');
+                if (!dropZone) return;
+
+                const month = dropZone.getAttribute('data-month');
+                const day = dropZone.getAttribute('data-day');
+                const loc = dropZone.getAttribute('data-loc'); // '2층', '사감' 등
+                const tm = el.getAttribute('data-tm'); // '오후', '야간' 등
+                const rawName = el.getAttribute('data-name'); // 선생님 이름
+
+                // 데이터 내 날짜 행 찾기
+                let rowIdx = -1;
+                for (let i = 1; i < newData.length; i++) {
+                    let dateStr = newData[i][0] ? newData[i][0].replace(/\s/g, '') : '';
+                    if (dateStr === month+'/'+day || dateStr === month+'.'+day || dateStr.includes(`${month}월${day}일`)) {
+                        rowIdx = i; break;
+                    }
+                }
+
+                // 데이터 내 층/시간대 열 찾기
+                let colIdx = -1;
+                for (let j = 2; j < globalHeaders.length; j++) {
+                    let header = globalHeaders[j] ? globalHeaders[j].replace(/\s/g, '') : '';
+                    if (header.includes(loc)) {
+                        if (tm) {
+                            if (header.includes(tm)) { colIdx = j; break; }
+                        } else {
+                            colIdx = j; break;
+                        }
+                    }
+                }
+
+                // 행, 열을 찾았다면 새 데이터 배열에 이름 삽입
+                if (rowIdx !== -1 && colIdx !== -1) {
+                    if (newData[rowIdx][colIdx]) newData[rowIdx][colIdx] += ', ' + rawName; // 이미 있으면 쉼표 추가
+                    else newData[rowIdx][colIdx] = rawName;
+                }
+            });
+
+            // 3. 구성된 데이터를 구글 앱스 스크립트로 전송
+            const payload = { sheetId: SHEET_ID, sheetName: '감독표', data: newData };
+            const response = await fetch(GAS_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' }, // CORS 방지를 위해 plain text로 전송
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+            if (result.status === 'success') {
+                alert('구글 스프레드시트에 성공적으로 저장되었습니다!');
+                globalSheetData = newData; // 화면의 기준 데이터 업데이트
             } else {
-                alert('이름 또는 비밀번호가 일치하지 않습니다.');
+                throw new Error(result.message);
             }
+
         } catch (error) {
-            alert('오류 발생: 관리자 시트를 확인할 수 없습니다. (' + error.message + ')');
+            alert('저장 중 오류가 발생했습니다: ' + error.message);
         } finally {
             showLoading(false);
         }
     }
 
-    // 관리자 수정 내용 저장 알림 (실제 저장은 앱스스크립트 필요)
-    function saveAdminChanges() {
-        alert('화면상의 배정이 변경되었습니다.\n\n(안내: 현재 API Key 방식으로는 읽기만 가능합니다. 실제 구글 시트에 저장하시려면 Google Apps Script 연동이 추가로 필요합니다.)');
-    }
-
     // --- 개인 일정 검색 ---
     async function checkDates() {
-        let searchedName = document.getElementById('teacherName').value.trim();
+        searchedName = document.getElementById('teacherName').value.trim();
         if (!searchedName) { alert('이름을 입력해주세요.'); return; }
         
         showLoading(true);
@@ -226,19 +281,16 @@
             for (let i = 1; i < globalSheetData.length; i++) {
                 const row = globalSheetData[i];
                 if (!row || row.length === 0) continue;
-
                 let dateStr = row[0] ? row[0] : '';
                 let month = extractMonth(dateStr);
-                let sagamName = '';
-                let floorGroups = {};
+                let sagamName = ''; let floorGroups = {};
 
                 for (let k = 1; k < globalHeaders.length; k++) {
                     let locHeader = globalHeaders[k] ? globalHeaders[k].trim() : '';
                     let tName = row[k] ? row[k].trim() : '';
                     if (locHeader.includes('사감') && tName) sagamName = tName;
                     else if (tName && !locHeader.includes('비고')) {
-                        let baseLoc = locHeader;
-                        let timeMark = '';
+                        let baseLoc = locHeader; let timeMark = '';
                         if (locHeader.includes('2층')) { baseLoc = '2층'; timeMark = locHeader.replace('2층', '').replace(/[\(\)]/g, '').trim(); }
                         else if (locHeader.includes('3층')) { baseLoc = '3층'; timeMark = locHeader.replace('3층', '').replace(/[\(\)]/g, '').trim(); }
                         else if (locHeader.includes('4층')) { baseLoc = '4층'; timeMark = locHeader.replace('4층', '').replace(/[\(\)]/g, '').trim(); }
@@ -256,15 +308,12 @@
 
                 for (let j = 1; j < row.length; j++) {
                     if (row[j] && row[j].replace(/\s/g, '').includes(searchedName.replace(/\s/g, ''))) {
-                        let day = '';
-                        let location = globalHeaders[j] ? globalHeaders[j].trim() : j + '열';
+                        let day = ''; let location = globalHeaders[j] ? globalHeaders[j].trim() : j + '열';
                         if (j >= 2 && row[1] && row[1].length <= 3) day = row[1];
 
                         let locColor = '#555'; 
-                        if (location.includes('2층')) locColor = 'black';
-                        else if (location.includes('3층')) locColor = '#0056b3';
-                        else if (location.includes('4층')) locColor = '#198754';
-                        else if (location.includes('사감')) locColor = '#8e44ad'; 
+                        if (location.includes('2층')) locColor = 'black'; else if (location.includes('3층')) locColor = '#0056b3';
+                        else if (location.includes('4층')) locColor = '#198754'; else if (location.includes('사감')) locColor = '#8e44ad'; 
                         else if (location.includes('비고')) locColor = '#dc3545';
 
                         let displayText = dateStr + (day ? ' (' + day + ')' : '');
@@ -287,8 +336,7 @@
             document.getElementById('resultTitle').innerText = searchedName + ' 선생님 일정';
 
             if (foundAny) {
-                const now = new Date();
-                let nextMonth = now.getMonth() + 2; if (nextMonth > 12) nextMonth = 1;
+                const now = new Date(); let nextMonth = now.getMonth() + 2; if (nextMonth > 12) nextMonth = 1;
                 document.getElementById('monthFilterContainer').style.display = 'flex';
                 document.querySelectorAll('.month-btn').forEach(btn => btn.classList.remove('active'));
                 renderSearchResults([now.getMonth() + 1, nextMonth], '이번 달과 다음 달의 일정을 보여줍니다.');
@@ -324,14 +372,12 @@
 
     // --- 전체 달력 보기 (일반/관리자 통합) ---
     async function initCalendar(isAdmin) {
-        currentCalYear = new Date().getFullYear();
-        currentCalMonth = new Date().getMonth() + 1;
+        currentCalYear = new Date().getFullYear(); currentCalMonth = new Date().getMonth() + 1;
         await loadAndRenderCalendar(isAdmin);
     }
     async function changeMonth(delta, isAdmin) {
         currentCalMonth += delta;
-        if (currentCalMonth > 12) { currentCalMonth = 1; currentCalYear++; } 
-        else if (currentCalMonth < 1) { currentCalMonth = 12; currentCalYear--; }
+        if (currentCalMonth > 12) { currentCalMonth = 1; currentCalYear++; } else if (currentCalMonth < 1) { currentCalMonth = 12; currentCalYear--; }
         await loadAndRenderCalendar(isAdmin);
     }
     async function loadAndRenderCalendar(isAdmin) {
@@ -343,7 +389,7 @@
             if (isAdmin) {
                 document.getElementById('adminCalendarTitle').innerText = currentCalYear + '년 ' + currentCalMonth + '월';
                 document.getElementById('adminCalendarContainer').innerHTML = calendarHtml;
-                setupDragAndDrop(); // 드래그 이벤트 활성화
+                setupDragAndDrop(); 
                 switchScreen('adminScreen');
             } else {
                 document.getElementById('calendarTitle').innerText = currentCalYear + '년 ' + currentCalMonth + '월';
@@ -373,12 +419,10 @@
 
     function findDataForCalendar(rows, month, day, headers, isAdmin) {
         let result = '';
-        const searchStr1 = month + '/' + day;
-        const searchStr2 = month + '.' + day;
+        const searchStr1 = month + '/' + day; const searchStr2 = month + '.' + day;
         
         for (let i = 1; i < rows.length; i++) {
-            const row = rows[i];
-            if (!row || !row[0]) continue;
+            const row = rows[i]; if (!row || !row[0]) continue;
             const sheetDate = row[0].replace(/\s/g, ''); 
             
             if (sheetDate === searchStr1 || sheetDate === searchStr2 || sheetDate.includes(month + '월' + day + '일')) {
@@ -403,7 +447,6 @@
                 }
 
                 let showTimeHeaders = Object.values(groups).some(g => g.length >= 2);
-
                 let topHeaderHtml = `<div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom: 5px; min-height: 16px;">`;
                 topHeaderHtml += `<div style="color: #e74c3c; font-size: 12px; font-weight: bold; padding-right: 4px;">${bigoList.join(', ')}</div>`;
                 if (showTimeHeaders) {
@@ -424,33 +467,36 @@
                     else if (baseLoc === '4층') { textColor = '#198754'; bgColor = '#e8f5e9'; borderColor = '#198754'; }
                     else if (baseLoc === '사감') { textColor = '#8e44ad'; bgColor = '#f4ecf7'; borderColor = '#8e44ad'; }
 
-                    // 관리자일 경우 각 층별 영역이 Drop Zone이 됨
                     result += `<div class="cal-item" style="color: ${textColor}; background-color: ${bgColor}; border-left-color: ${borderColor};">`;
                     
-                    let namesHtml = `<div class="drop-zone" data-loc="${baseLoc}" style="justify-content:flex-end; width:100%;">`;
+                    // 위치와 날짜 정보가 포함된 Drop Zone (저장 기능에 쓰임)
+                    let namesHtml = `<div class="drop-zone" data-loc="${baseLoc}" data-month="${month}" data-day="${day}" style="justify-content:flex-end; width:100%;">`;
 
                     if (showTimeHeaders) {
                         dayTimeMarks.forEach(tm => {
                             let person = group.find(g => g.timeMark === tm);
-                            let nameStr = person ? person.name : '';
-                            if (baseLoc === '사감' && nameStr) nameStr = `사감 ${nameStr}`;
+                            let rawName = person ? person.name : '';
+                            let displayStr = rawName;
+                            if (baseLoc === '사감' && displayStr) displayStr = `사감 ${displayStr}`;
                             
-                            // 관리자면 드래그 가능한 태그 추가
-                            if(isAdmin && nameStr) {
-                                let itemId = `drag-${month}-${day}-${baseLoc}-${tm}-${nameStr}`;
-                                namesHtml += `<div style="width:55px; text-align:center;"><span class="draggable-name" draggable="true" id="${itemId}">${nameStr}</span></div>`;
+                            if(isAdmin && displayStr) {
+                                let itemId = `drag-${month}-${day}-${baseLoc}-${tm}-${rawName}`;
+                                // data-name 에는 '사감' 글자가 제외된 원래 이름 저장
+                                namesHtml += `<div style="width:55px; text-align:center;"><span class="draggable-name" draggable="true" id="${itemId}" data-tm="${tm}" data-name="${rawName}">${displayStr}</span></div>`;
                             } else {
-                                namesHtml += `<div style="width:55px; text-align:center; font-weight:bold; font-size:12.5px;">${nameStr}</div>`;
+                                namesHtml += `<div style="width:55px; text-align:center; font-weight:bold; font-size:12.5px;">${displayStr}</div>`;
                             }
                         });
                     } else {
                         group.forEach((g, idx) => {
-                            let nameStr = baseLoc === '사감' ? `사감 ${g.name}` : g.name;
+                            let rawName = g.name;
+                            let displayStr = baseLoc === '사감' ? `사감 ${rawName}` : rawName;
                             if(isAdmin) {
-                                let itemId = `drag-${month}-${day}-${baseLoc}-${idx}-${nameStr}`;
-                                namesHtml += `<span class="draggable-name" draggable="true" id="${itemId}">${nameStr}</span>`;
+                                let tm = g.timeMark || '';
+                                let itemId = `drag-${month}-${day}-${baseLoc}-${idx}-${rawName}`;
+                                namesHtml += `<span class="draggable-name" draggable="true" id="${itemId}" data-tm="${tm}" data-name="${rawName}">${displayStr}</span>`;
                             } else {
-                                namesHtml += `<span style="font-weight:bold; font-size:12.5px; margin-right:5px;">${nameStr}</span>`;
+                                namesHtml += `<span style="font-weight:bold; font-size:12.5px; margin-right:5px;">${displayStr}</span>`;
                             }
                         });
                     }
@@ -462,7 +508,7 @@
         return result;
     }
 
-    // --- 드래그 앤 드롭 구현 로직 ---
+    // --- 드래그 앤 드롭 이벤트 ---
     function setupDragAndDrop() {
         const draggables = document.querySelectorAll('.draggable-name');
         const dropZones = document.querySelectorAll('.drop-zone');
@@ -472,32 +518,22 @@
                 e.dataTransfer.setData('text/plain', draggable.id);
                 setTimeout(() => draggable.style.display = 'none', 0);
             });
-            draggable.addEventListener('dragend', () => {
-                draggable.style.display = 'inline-block';
-            });
+            draggable.addEventListener('dragend', () => { draggable.style.display = 'inline-block'; });
         });
 
         dropZones.forEach(zone => {
-            zone.addEventListener('dragover', (e) => {
-                e.preventDefault(); // 드롭 허용
-                zone.classList.add('over');
-            });
-            zone.addEventListener('dragleave', () => {
-                zone.classList.remove('over');
-            });
+            zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('over'); });
+            zone.addEventListener('dragleave', () => { zone.classList.remove('over'); });
             zone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                zone.classList.remove('over');
+                e.preventDefault(); zone.classList.remove('over');
                 const id = e.dataTransfer.getData('text/plain');
                 const draggableElement = document.getElementById(id);
                 
-                // 해당 존에 이미 자식 요소(div)로 칸이 나뉘어있다면 가장 가까운 빈 div나 해당 위치에 넣는 복잡한 로직이 필요하나,
-                // 기본적으로 drop-zone 안으로 요소를 이동시킵니다.
                 if (draggableElement) {
                     if(e.target.tagName === 'DIV' && e.target.parentElement.classList.contains('drop-zone')) {
-                         e.target.innerHTML = ''; // 기존 칸 비우기 (오후/야간 칸 바꿀때)
+                         e.target.innerHTML = ''; 
                          e.target.appendChild(draggableElement);
-                    } else {
+                    } else if (e.target.classList.contains('drop-zone')) {
                         zone.appendChild(draggableElement);
                     }
                 }
@@ -505,7 +541,6 @@
         });
     }
 
-    // --- 화면 전환 로직 ---
     function showLoading(show) { document.getElementById('loading').style.display = show ? 'block' : 'none'; }
     function switchScreen(screenId) {
         ['loginScreen', 'resultScreen', 'calendarScreen', 'adminLoginScreen', 'adminScreen'].forEach(id => {
@@ -514,9 +549,7 @@
         document.getElementById(screenId).style.display = 'block';
     }
     function goBack() {
-        document.getElementById('teacherName').value = '';
-        document.getElementById('adminId').value = '';
-        document.getElementById('adminPw').value = '';
+        document.getElementById('teacherName').value = ''; document.getElementById('adminId').value = ''; document.getElementById('adminPw').value = '';
         switchScreen('loginScreen');
     }
 </script>
