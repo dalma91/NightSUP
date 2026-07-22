@@ -110,7 +110,6 @@
 <div class="container" id="adminScreen">
     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 10px;">
         <h1 style="color: #e74c3c; margin:0;">🛠️ 관리자 모드 (드래그 저장)</h1>
-        <!-- 버튼 텍스트 '저장하기'로 수정 완료 -->
         <button class="save-btn" onclick="saveAdminChanges()">💾 저장하기</button>
     </div>
     
@@ -124,7 +123,6 @@
 </div>
 
 <script>
-    // 선생님 웹앱 URL
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbzFpsT0mfZD0L6lTlLajcafYNari4oP2ILK45i4LNT5CvDE-WimIHXqbi2m7qtDaP8/exec'; 
 
     const SHEET_ID = '1Y7cCXkLzGLbpy4RqYXljIy5a7RnWzYgp_J_ydatJiA4';
@@ -161,6 +159,7 @@
         }
     }
 
+    // --- ★ 여러 관리자를 완벽하게 확인하도록 로직 강화 ★ ---
     async function adminLogin() {
         const adminId = document.getElementById('adminId').value.trim();
         const adminPw = document.getElementById('adminPw').value.trim();
@@ -170,49 +169,61 @@
         try {
             const adminData = await fetchSpecificSheet('관리자');
             let isSuccess = false;
+            
+            // 등록된 모든 관리자를 1번째 행부터 끝까지 안전하게 검사
             for (let i = 1; i < adminData.length; i++) {
-                if ((adminData[i][0]||'').trim() === adminId && (adminData[i][1]||'').trim() === adminPw) {
-                    isSuccess = true; break;
+                // 시트에 빈 줄이 있더라도 멈추지 않고 건너뛰도록 처리
+                if (!adminData[i] || adminData[i].length === 0) continue;
+                
+                let sheetId = (adminData[i][0] || '').toString().trim();
+                let sheetPw = (adminData[i][1] || '').toString().trim();
+                
+                if (sheetId === adminId && sheetPw === adminPw) {
+                    isSuccess = true; 
+                    break; // 일치하는 관리자를 찾으면 즉시 루프 종료
                 }
             }
+            
             if (isSuccess) {
                 alert('관리자 로그인 성공!');
-                document.getElementById('adminId').value = ''; document.getElementById('adminPw').value = '';
+                document.getElementById('adminId').value = ''; 
+                document.getElementById('adminPw').value = '';
                 initCalendar(true); 
-            } else { alert('이름 또는 비밀번호가 일치하지 않습니다.'); }
-        } catch (error) { alert('오류 발생: ' + error.message); } finally { showLoading(false); }
+            } else { 
+                alert('이름 또는 비밀번호가 일치하지 않습니다.'); 
+            }
+        } catch (error) { 
+            alert('오류 발생: ' + error.message); 
+        } finally { 
+            showLoading(false); 
+        }
     }
 
-    // --- ★ 에러 해결 & 날짜 열 정렬 강화 ★ ---
+    // --- 데이터 저장 ---
     async function saveAdminChanges() {
         if (!confirm('화면에 보이는 배치 상태로 구글 스프레드시트에 저장하시겠습니까?')) return;
         showLoading(true);
         try {
             let newData = JSON.parse(JSON.stringify(globalSheetData));
-            const maxCols = globalHeaders.length; // 헤더의 칸 수를 고정 기준으로 삼음
+            const maxCols = globalHeaders.length; 
 
-            // 1. 완벽한 직사각형 배열 생성 (The data has 12 but the range has 13 에러 방지)
             for (let i = 0; i < newData.length; i++) {
-                // 남는 열 잘라내기
                 if (newData[i].length > maxCols) {
                     newData[i] = newData[i].slice(0, maxCols);
                 }
-                // 부족한 열 빈칸으로 채우기
                 while (newData[i].length < maxCols) {
                     newData[i].push('');
                 }
                 
-                // 1행(헤더)이 아닌 데이터 행의 이름칸 초기화
                 if (i > 0) {
                     for (let j = 2; j < maxCols; j++) {
                         if (globalHeaders[j] && !globalHeaders[j].includes('비고')) {
-                            newData[i][j] = ''; // 기존 배정 완전 비우기
+                            newData[i][j] = ''; 
                         }
                     }
                 }
             }
 
-            // 2. 화면의 드래그 항목을 읽어 정확한 열(Column)에 재배치
             const draggables = document.querySelectorAll('.draggable-name');
             draggables.forEach(el => {
                 const dropZone = el.closest('.drop-zone');
@@ -220,11 +231,10 @@
 
                 const month = dropZone.getAttribute('data-month');
                 const day = dropZone.getAttribute('data-day');
-                const loc = dropZone.getAttribute('data-loc'); // '2층', '사감' 등
-                const tm = el.getAttribute('data-tm'); // '오후', '야간' 등
-                const rawName = el.getAttribute('data-name'); // 선생님 이름
+                const loc = dropZone.getAttribute('data-loc'); 
+                const tm = el.getAttribute('data-tm'); 
+                const rawName = el.getAttribute('data-name'); 
 
-                // 행 찾기
                 let rowIdx = -1;
                 for (let i = 1; i < newData.length; i++) {
                     let dateStr = newData[i][0] ? newData[i][0].replace(/\s/g, '') : '';
@@ -233,7 +243,6 @@
                     }
                 }
 
-                // 열 찾기 (정확한 위치 매핑)
                 let colIdx = -1;
                 for (let j = 2; j < maxCols; j++) {
                     let header = globalHeaders[j] ? globalHeaders[j].replace(/\s/g, '') : '';
@@ -246,14 +255,12 @@
                     }
                 }
 
-                // 매핑된 좌표에 이름 등록
                 if (rowIdx !== -1 && colIdx !== -1) {
                     if (newData[rowIdx][colIdx]) newData[rowIdx][colIdx] += ', ' + rawName; 
                     else newData[rowIdx][colIdx] = rawName;
                 }
             });
 
-            // 3. 구성된 데이터를 구글 앱스 스크립트로 전송
             const payload = { sheetId: SHEET_ID, sheetName: '감독표', data: newData };
             const response = await fetch(GAS_URL, {
                 method: 'POST',
@@ -379,7 +386,7 @@
         return m ? parseInt(m[1], 10) : -1;
     }
 
-    // --- 전체 달력 보기 (일반/관리자 통합) ---
+    // --- 전체 달력 보기 ---
     async function initCalendar(isAdmin) {
         currentCalYear = new Date().getFullYear(); currentCalMonth = new Date().getMonth() + 1;
         await loadAndRenderCalendar(isAdmin);
@@ -449,7 +456,9 @@
                             else if (loc.includes('사감')) { baseLoc = '사감'; timeMark = loc.replace('사감', '').replace(/[\(\)]/g, '').trim(); }
                             
                             if (timeMark && !dayTimeMarks.includes(timeMark)) dayTimeMarks.push(timeMark);
-                            // ★ 감독이 있는 층만 groups에 추가되므로, 감독이 없는 층은 자연스럽게 건너뛰어집니다.
+                            
+                            // 이름이 배정된 층(baseLoc)만 groups 딕셔너리에 추가되므로,
+                            // 결과적으로 이름이 1명도 없는 층은 자연스럽게 건너뛰어집니다.
                             if (!groups[baseLoc]) groups[baseLoc] = [];
                             groups[baseLoc].push({ name: row[j].trim(), timeMark: timeMark });
                         }
@@ -459,8 +468,6 @@
                 let showTimeHeaders = Object.values(groups).some(g => g.length >= 2);
                 let topHeaderHtml = `<div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom: 5px; min-height: 16px;">`;
                 topHeaderHtml += `<div style="color: #e74c3c; font-size: 12px; font-weight: bold; padding-right: 4px;">${bigoList.join(', ')}</div>`;
-                
-                // 해당 날짜의 시간대 헤더 표시 (오후, 야간 등 열 맞춤)
                 if (showTimeHeaders) {
                     topHeaderHtml += `<div style="display:flex; gap:5px; justify-content:flex-end;">`;
                     dayTimeMarks.forEach(tm => { topHeaderHtml += `<div style="width:55px; text-align:center; font-size:11.5px; color:#555; font-weight:bold;">${tm}</div>`; });
@@ -494,7 +501,6 @@
                                 let itemId = `drag-${month}-${day}-${baseLoc}-${tm}-${rawName}`;
                                 namesHtml += `<div style="width:55px; text-align:center;"><span class="draggable-name" draggable="true" id="${itemId}" data-tm="${tm}" data-name="${rawName}">${displayStr}</span></div>`;
                             } else {
-                                // 빈 시간대라도 55px 빈 공간을 출력하여 열(Column)이 완벽히 정렬되도록 유지
                                 namesHtml += `<div style="width:55px; text-align:center; font-weight:bold; font-size:12.5px;">${displayStr}</div>`;
                             }
                         });
