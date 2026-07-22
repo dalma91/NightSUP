@@ -74,7 +74,7 @@
             .calendar-table th, .calendar-table td { padding: 1px; height: 50px; }
         }
 
-        /* ★ 통계 팝업(모달) 스타일 ★ */
+        /* 통계 팝업(모달) 스타일 */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: white; padding: 20px; border-radius: 10px; width: 95%; max-width: 700px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
@@ -114,8 +114,9 @@
         <div id="myScheduleArea">
             <h1 id="resultTitle" style="text-align: center; margin-top: 0; font-size: 19px; margin-bottom: 10px;"></h1>
             
-            <!-- ★ 왼쪽 상단에 통계 보기 버튼 배치 ★ -->
-            <div style="display:flex; gap:10px; justify-content:center; margin-bottom: 15px;">
+            <!-- ★ 하단에 있던 돌아가기 버튼을 집 모양(🏠)으로 바꾸어 통계 버튼들 맨 앞에 배치했습니다 ★ -->
+            <div style="display:flex; gap:8px; justify-content:center; margin-bottom: 15px;">
+                <button class="back-btn" style="padding: 8px 12px; font-size: 14px; width:auto; margin:0; background-color: #95a5a6;" onclick="goBack()" title="처음으로 돌아가기">🏠</button>
                 <button class="cal-btn" style="padding: 8px 12px; font-size: 13px; width:auto; margin:0; flex:1;" onclick="showStatsModal('yaja')">📊 야자 통계</button>
                 <button class="cal-btn" style="padding: 8px 12px; font-size: 13px; width:auto; margin:0; flex:1; background-color:#8e44ad;" onclick="showStatsModal('sagam')">📊 사감 통계</button>
             </div>
@@ -125,7 +126,6 @@
         </div>
         
         <div id="calendarArea">
-            <h1 style="text-align: center; color: #2c3e50; margin-top: 0; margin-bottom: 10px; font-size: 19px;">📅 전체 감독 달력</h1>
             <div class="calendar-header">
                 <button class="cal-nav-btn" onclick="changeMonth(-1, false)">◀ 이전</button>
                 <span id="calendarTitle" style="font-size:20px; font-weight:bold;"></span>
@@ -135,10 +135,7 @@
         </div>
         
     </div>
-    
-    <div style="text-align: center; margin-top: 25px; border-top: 1px solid #eee; padding-top: 20px;">
-        <button class="back-btn" style="width:auto; padding:10px 30px; margin:0;" onclick="goBack()">처음으로 돌아가기</button>
-    </div>
+    <!-- ★ 기존 하단의 커다란 돌아가기 버튼 삭제 완료 ★ -->
 </div>
 
 <div class="container" id="adminLoginScreen">
@@ -193,7 +190,7 @@
     <div style="text-align: center;"><button class="back-btn" style="width:auto; padding:10px 30px;" onclick="switchScreen('adminScreen')">캘린더로 돌아가기</button></div>
 </div>
 
-<!-- ★ 통계 팝업 HTML 영역 추가 ★ -->
+<!-- 통계 팝업 HTML 영역 -->
 <div class="modal-overlay" id="statsModal">
     <div class="modal-content">
         <div class="modal-header">
@@ -201,23 +198,20 @@
             <button class="close-modal-btn" onclick="closeStatsModal()">닫기 ✖</button>
         </div>
         <div class="modal-body" id="statsModalContent">
-            <!-- 통계 표가 여기에 자바스크립트로 그려집니다 -->
+            <!-- 통계 표 자바스크립트 생성 영역 -->
         </div>
     </div>
 </div>
 
-<!-- 스크립트 불러오기 (캐시 방지 v=22) -->
-<script src="js/config.js?v=22"></script>
-<script src="js/api.js?v=22"></script>
-<script src="js/ui.js?v=22"></script>
-<script src="js/search.js?v=22"></script>
-<script src="js/calendar.js?v=22"></script>
-<script src="js/admin.js?v=22"></script>
+<!-- 스크립트 불러오기 (캐시 방지 v=24) -->
+<script src="js/config.js?v=24"></script>
+<script src="js/api.js?v=24"></script>
+<script src="js/ui.js?v=24"></script>
+<script src="js/search.js?v=24"></script>
+<script src="js/calendar.js?v=24"></script>
+<script src="js/admin.js?v=24"></script>
 
 <script>
-    // ----------------------------------------------------
-    // [기존] 2개월(또는 2월 단독) 동기화 필터링 로직
-    // ----------------------------------------------------
     function updateMyScheduleDisplay() {
         const sections = document.querySelectorAll('.month-section');
         if (!sections || sections.length === 0) return;
@@ -301,9 +295,6 @@
         } catch (e) { console.log("달력 표시 중 문제 발생:", e); }
     }
 
-    // ----------------------------------------------------
-    // ★ [신규] 통계 계산 및 팝업 표시 로직
-    // ----------------------------------------------------
     function showStatsModal(type) {
         if (!globalSheetData || globalSheetData.length === 0) {
             alert('데이터를 먼저 불러와야 합니다.');
@@ -311,10 +302,8 @@
         }
 
         let stats = {};
-        // 현재 캘린더에 표시된 연도를 기준으로 요일을 계산합니다.
         let currentYear = typeof currentCalYear !== 'undefined' ? currentCalYear : new Date().getFullYear();
 
-        // 시트 데이터를 순회하며 요일별 카운트 계산
         for (let i = 1; i < globalSheetData.length; i++) {
             const row = globalSheetData[i];
             if (!row || !row[0]) continue;
@@ -328,19 +317,17 @@
             }
             if (month === -1 || day === -1) continue;
 
-            // 자바스크립트 요일 추출: 0(일) ~ 6(토)
             let dateObj = new Date(currentYear, month - 1, day);
             let dayOfWeek = dateObj.getDay(); 
 
             for (let j = 2; j < row.length; j++) {
                 if (!row[j] || row[j].trim() === '') continue;
                 let header = globalHeaders[j] ? globalHeaders[j].trim() : '';
-                if (header.includes('비고')) continue; // 비고란 제외
+                if (header.includes('비고')) continue;
 
                 let isSagam = header.includes('사감');
                 let isYaja = !isSagam; 
 
-                // 요청한 통계 타입(야자 or 사감)에 맞는 데이터만 필터링
                 if (type === 'sagam' && !isSagam) continue;
                 if (type === 'yaja' && !isYaja) continue;
 
@@ -350,7 +337,6 @@
                     if (!name) return;
                     
                     if (!stats[name]) {
-                        // [일, 월, 화, 수, 목, 금, 토]
                         stats[name] = [0, 0, 0, 0, 0, 0, 0]; 
                     }
                     stats[name][dayOfWeek]++;
@@ -358,7 +344,6 @@
             }
         }
 
-        // 팝업 HTML 테이블 생성
         let title = type === 'yaja' ? '📊 야자감독 횟수 통계' : '📊 사감 횟수 통계';
         let html = `<table class="stats-table">
             <thead>
@@ -370,7 +355,6 @@
             </thead>
             <tbody>`;
             
-        // 이름 가나다 순으로 정렬
         let sortedNames = Object.keys(stats).sort();
         
         if(sortedNames.length === 0) {
@@ -380,16 +364,15 @@
                 let counts = stats[name];
                 let total = counts.reduce((a, b) => a + b, 0);
                 
-                // 보기 좋게 0번(일요일)을 맨 뒤로 보냅니다.
                 html += `<tr>
                     <td style="font-weight:bold;">${name}</td>
-                    <td>${counts[1] || '-'}</td> <!-- 월 -->
-                    <td>${counts[2] || '-'}</td> <!-- 화 -->
-                    <td>${counts[3] || '-'}</td> <!-- 수 -->
-                    <td>${counts[4] || '-'}</td> <!-- 목 -->
-                    <td>${counts[5] || '-'}</td> <!-- 금 -->
-                    <td>${counts[6] || '-'}</td> <!-- 토 -->
-                    <td style="color:#e74c3c;">${counts[0] || '-'}</td> <!-- 일 -->
+                    <td>${counts[1] || '-'}</td>
+                    <td>${counts[2] || '-'}</td>
+                    <td>${counts[3] || '-'}</td>
+                    <td>${counts[4] || '-'}</td>
+                    <td>${counts[5] || '-'}</td>
+                    <td>${counts[6] || '-'}</td>
+                    <td style="color:#e74c3c;">${counts[0] || '-'}</td>
                     <td class="stats-total-col">${total}</td>
                 </tr>`;
             });
