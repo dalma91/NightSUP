@@ -10,8 +10,8 @@
         
         #loginScreen, #adminLoginScreen { max-width: 380px; padding: 40px 20px; }
         
-        /* 통합 화면 넓이 지정 */
-        #resultScreen, #adminScreen, #superAdminScreen { max-width: 1250px; width: 98%; }
+        /* ★ 화면을 훨씬 넓게(1400px) 잡아 좌우 배치가 넉넉하게 들어가도록 설정 ★ */
+        #resultScreen, #adminScreen, #superAdminScreen { max-width: 1400px; width: 98%; }
         
         h1 { font-size: 22px; color: #333; margin-bottom: 25px; }
         .input-group { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
@@ -38,28 +38,29 @@
         
         .result-area, #adminLoginScreen, #adminScreen, #superAdminScreen { display: none; text-align: left; }
         .month-section { margin-bottom: 20px; }
-        .month-title { font-weight: bold; font-size: 18px; color: #2c3e50; border-bottom: 2px solid #4CAF50; padding-bottom: 5px; margin-bottom: 10px; }
+        .month-title { font-weight: bold; font-size: 17px; color: #2c3e50; border-bottom: 2px solid #4CAF50; padding-bottom: 5px; margin-bottom: 10px; }
         .date-list { list-style-type: none; padding: 0; margin: 0; }
-        .date-list li { background: #e8f5e9; margin-bottom: 8px; padding: 12px; border-radius: 5px; color: #333; font-size: 15px; line-height: 1.5; }
+        .date-list li { background: #e8f5e9; margin-bottom: 6px; padding: 10px; border-radius: 5px; color: #333; font-size: 14px; line-height: 1.4; }
         .error-text { color: #e74c3c; font-weight: bold; text-align: center; margin-top: 20px; }
         
-        .calendar-header { display: flex; justify-content: center; align-items: center; margin-bottom: 15px; }
-        .cal-nav-btn { background-color: #f39c12; width: auto; padding: 8px 15px; font-size: 15px; margin: 0 15px; }
+        .calendar-header { display: flex; justify-content: center; align-items: center; margin-bottom: 10px; }
+        .cal-nav-btn { background-color: #f39c12; width: auto; padding: 6px 12px; font-size: 14px; margin: 0 15px; }
         
+        /* ★ 캘린더 폭을 더욱 슬림하게 조절 ★ */
         .calendar-table { width: 100%; border-collapse: collapse; margin-top: 10px; table-layout: fixed; }
-        .calendar-table th, .calendar-table td { border: 1px solid #ddd; padding: 4px; vertical-align: top; height: 70px; overflow: hidden; }
-        .calendar-table th { background-color: #f8f9fa; text-align: center; height: auto; padding: 8px 0; font-size: 14px; }
+        .calendar-table th, .calendar-table td { border: 1px solid #ddd; padding: 2px; vertical-align: top; height: 60px; overflow: hidden; }
+        .calendar-table th { background-color: #f8f9fa; text-align: center; height: auto; padding: 6px 0; font-size: 13px; }
         .calendar-table th:first-child, .calendar-table td:first-child { color: red; } 
         .calendar-table th:last-child, .calendar-table td:last-child { color: blue; } 
         
-        .cal-date { font-weight: bold; margin-bottom: 4px; text-align: left; font-size: 14px; }
+        .cal-date { font-weight: bold; margin-bottom: 2px; text-align: left; font-size: 13px; }
         
-        .cal-item { border-radius: 3px; margin-bottom: 2px; border-left: 3px solid #ccc; display: flex; align-items: center; padding: 2px; min-height: 20px; }
+        .cal-item { border-radius: 3px; margin-bottom: 1px; border-left: 3px solid #ccc; display: flex; align-items: center; padding: 1px; min-height: 18px; }
         
-        .draggable-name { cursor: grab; background-color: rgba(255,255,255,0.8); border: 1px dashed #aaa; padding: 1px 4px; border-radius: 3px; display: inline-block; margin: 1px; transition: 0.2s; font-weight:bold; font-size:12px; z-index: 10;}
+        .draggable-name { cursor: grab; background-color: rgba(255,255,255,0.8); border: 1px dashed #aaa; padding: 1px 2px; border-radius: 3px; display: inline-block; margin: 1px; transition: 0.2s; font-weight:bold; font-size:11px; z-index: 10;}
         .draggable-name:active { cursor: grabbing; opacity: 0.5; }
         
-        .drop-zone { min-height: 20px; padding: 1px; flex-grow: 1; display: flex; flex-wrap: wrap; align-items: center;}
+        .drop-zone { min-height: 18px; padding: 1px; flex-grow: 1; display: flex; flex-wrap: wrap; align-items: center;}
         .drop-zone.over { background-color: rgba(243, 156, 18, 0.3); border-radius: 4px; border: 2px dashed #f39c12;}
 
         .admin-table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 15px; }
@@ -68,10 +69,17 @@
         .del-btn { background-color: #e74c3c; width: auto; padding: 6px 12px; font-size: 13px; margin: 0; }
         .add-btn { background-color: #27ae60; width: auto; padding: 12px 20px; font-size: 15px; margin: 0; }
 
-        @media (max-width: 768px) {
-            .calendar-table th, .calendar-table td { padding: 2px; height: 60px; }
-            .cal-item { padding: 2px; }
-            .cal-date { font-size: 13px; }
+        /* ★ 좌우 배치 레이아웃 (플렉스박스) ★ */
+        .layout-wrapper { display: flex; gap: 20px; align-items: flex-start; }
+        #myScheduleArea { flex: 1; min-width: 250px; border-right: 1px solid #eee; padding-right: 20px; }
+        #calendarArea { flex: 3.5; min-width: 600px; }
+
+        /* 화면이 작아지면 다시 상하 배치로 부드럽게 변경 */
+        @media (max-width: 950px) {
+            .layout-wrapper { flex-direction: column; }
+            #myScheduleArea { border-right: none; border-bottom: 2px dashed #eee; padding-right: 0; padding-bottom: 20px; width: 100%; }
+            #calendarArea { width: 100%; min-width: auto; }
+            .calendar-table th, .calendar-table td { padding: 1px; height: 50px; }
         }
     </style>
 </head>
@@ -94,27 +102,33 @@
     <div id="loading">데이터를 불러오는 중입니다...</div>
 </div>
 
-<!-- 통합 화면 (나의 일정 + 전체 달력) -->
 <div class="container result-area" id="resultScreen">
-    
-    <div id="myScheduleArea">
-        <h1 id="resultTitle" style="text-align: center;"></h1>
-        <div class="month-filter-container" id="monthFilterContainer"></div>
-        <div id="resultsContainer"></div>
-        <hr style="border: 0; border-top: 2px dashed #ccc; margin: 40px 0 30px 0;">
-    </div>
-    
-    <div id="calendarArea">
-        <h1 style="text-align: center; color: #2c3e50; margin-bottom: 20px; font-size: 20px;">📅 전체 감독 달력</h1>
-        <div class="calendar-header">
-            <button class="cal-nav-btn" onclick="changeMonth(-1, false)">◀ 이전</button>
-            <span id="calendarTitle" style="font-size:22px; font-weight:bold;"></span>
-            <button class="cal-nav-btn" onclick="changeMonth(1, false)">다음 ▶</button>
+    <!-- ★ 새로 추가된 좌우 배치 감싸개(Wrapper) ★ -->
+    <div class="layout-wrapper">
+        
+        <!-- 좌측: 나의 일정 -->
+        <div id="myScheduleArea">
+            <h1 id="resultTitle" style="text-align: center; margin-top: 0; font-size: 19px;"></h1>
+            <div class="month-filter-container" id="monthFilterContainer"></div>
+            <div id="resultsContainer"></div>
         </div>
-        <div id="calendarContainer"></div>
+        
+        <!-- 우측: 전체 달력 -->
+        <div id="calendarArea">
+            <h1 style="text-align: center; color: #2c3e50; margin-top: 0; margin-bottom: 10px; font-size: 19px;">📅 전체 감독 달력</h1>
+            <div class="calendar-header">
+                <button class="cal-nav-btn" onclick="changeMonth(-1, false)">◀ 이전</button>
+                <span id="calendarTitle" style="font-size:20px; font-weight:bold;"></span>
+                <button class="cal-nav-btn" onclick="changeMonth(1, false)">다음 ▶</button>
+            </div>
+            <div id="calendarContainer"></div>
+        </div>
+        
     </div>
     
-    <div style="text-align: center; margin-top: 30px;"><button class="back-btn" style="width:auto; padding:10px 30px;" onclick="goBack()">처음으로 돌아가기</button></div>
+    <div style="text-align: center; margin-top: 25px; border-top: 1px solid #eee; padding-top: 20px;">
+        <button class="back-btn" style="width:auto; padding:10px 30px; margin:0;" onclick="goBack()">처음으로 돌아가기</button>
+    </div>
 </div>
 
 <div class="container" id="adminLoginScreen">
@@ -141,7 +155,7 @@
     
     <div class="calendar-header">
         <button class="cal-nav-btn" onclick="changeMonth(-1, true)">◀ 이전</button>
-        <span id="adminCalendarTitle" style="font-size:22px; font-weight:bold;"></span>
+        <span id="adminCalendarTitle" style="font-size:20px; font-weight:bold;"></span>
         <button class="cal-nav-btn" onclick="changeMonth(1, true)">다음 ▶</button>
     </div>
     <div id="adminCalendarContainer"></div>
@@ -173,15 +187,14 @@
     <div style="text-align: center;"><button class="back-btn" style="width:auto; padding:10px 30px;" onclick="switchScreen('adminScreen')">캘린더로 돌아가기</button></div>
 </div>
 
-<!-- 스크립트 캐시 방지 버전 v=15 로 업데이트 -->
-<script src="js/config.js?v=15"></script>
-<script src="js/api.js?v=15"></script>
-<script src="js/ui.js?v=15"></script>
-<script src="js/search.js?v=15"></script>
-<script src="js/calendar.js?v=15"></script>
-<script src="js/admin.js?v=15"></script>
+<!-- 스크립트 캐시 방지 버전 v=16 로 업데이트 -->
+<script src="js/config.js?v=16"></script>
+<script src="js/api.js?v=16"></script>
+<script src="js/ui.js?v=16"></script>
+<script src="js/search.js?v=16"></script>
+<script src="js/calendar.js?v=16"></script>
+<script src="js/admin.js?v=16"></script>
 
-<!-- ★ 에러 원천 차단: 화면 요소를 찾을 수 없을 때 강제로 멈추지 않도록 방어 코드 추가 ★ -->
 <script>
     async function searchAndShowBoth() {
         try {

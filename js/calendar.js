@@ -26,7 +26,6 @@ async function loadAndRenderCalendar(isAdmin) {
             document.getElementById('calendarTitle').innerText = currentCalYear + '년 ' + currentCalMonth + '월';
             document.getElementById('calendarContainer').innerHTML = calendarHtml;
             
-            // ★ 핵심 변경: 분리되어 있던 달력 화면 대신 통합된 'resultScreen'을 띄워줍니다.
             switchScreen('resultScreen');
         }
     } catch (error) { alert('오류 발생: ' + error.message); } finally { showLoading(false); }
@@ -105,21 +104,23 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
             }
             
             if (bigoList.length > 0) {
-                bigoStr = `<span style="color: #e74c3c; font-size: 13.5px; font-weight: bold; margin-left: 6px; word-break: keep-all;">${bigoList.join(', ')}</span>`;
+                // 폰트 크기 미세 축소 (13.5px -> 12px)
+                bigoStr = `<span style="color: #e74c3c; font-size: 12px; font-weight: bold; margin-left: 4px; word-break: keep-all;">${bigoList.join(', ')}</span>`;
             }
 
             if (totalTeacherCount > 0) {
                 let showTimeHeaders = (dayTimeMarks.length >= 2); 
                 
                 if (showTimeHeaders) {
-                    let topHeaderHtml = `<div style="display: flex; justify-content: center; align-items: flex-end; margin-bottom: 3px; min-height: 14px;">`;
-                    topHeaderHtml += `<div style="display:flex; gap:5px; justify-content:center;">`;
+                    let topHeaderHtml = `<div style="display: flex; justify-content: center; align-items: flex-end; margin-bottom: 2px; min-height: 12px;">`;
+                    topHeaderHtml += `<div style="display:flex; gap:2px; justify-content:center; width: 100%;">`;
                     dayTimeMarks.forEach(tm => { 
                         let tmColor = '#555'; 
                         if (tm.includes('오후')) tmColor = '#0056b3'; 
                         else if (tm.includes('야간')) tmColor = '#198754'; 
                         
-                        topHeaderHtml += `<div style="width:55px; text-align:center; font-size:11.5px; color:${tmColor}; font-weight:bold;">${tm}</div>`; 
+                        // ★ 고정폭(width:55px)을 유연한 폭(flex:1)으로 변경
+                        topHeaderHtml += `<div style="flex:1; text-align:center; font-size:11px; color:${tmColor}; font-weight:bold;">${tm}</div>`; 
                     });
                     topHeaderHtml += `</div></div>`;
                     result += topHeaderHtml;
@@ -139,7 +140,8 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
 
                     result += `<div class="cal-item" style="color: ${textColor}; background-color: ${bgColor}; border-left-color: ${borderColor};">`;
                     
-                    let namesHtml = `<div class="drop-zone" data-loc="${baseLoc}" data-month="${month}" data-day="${day}" style="justify-content:center; width:100%; min-height:20px; gap:3px;">`;
+                    // gap 축소
+                    let namesHtml = `<div class="drop-zone" data-loc="${baseLoc}" data-month="${month}" data-day="${day}" style="justify-content:center; width:100%; min-height:18px; gap:2px;">`;
 
                     if (showTimeHeaders) {
                         dayTimeMarks.forEach(tm => {
@@ -147,11 +149,12 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
                             let rawName = person ? person.name : '';
                             let displayStr = rawName; 
                             
+                            // ★ 고정폭을 유연하게(flex:1) 변경
                             if(isAdmin && displayStr) {
                                 let itemId = `drag-${month}-${day}-${baseLoc}-${tm}-${rawName}`;
-                                namesHtml += `<div style="width:55px; text-align:center;"><span class="draggable-name" draggable="true" id="${itemId}" data-tm="${tm}" data-name="${rawName}">${displayStr}</span></div>`;
+                                namesHtml += `<div style="flex:1; text-align:center;"><span class="draggable-name" draggable="true" id="${itemId}" data-tm="${tm}" data-name="${rawName}">${displayStr}</span></div>`;
                             } else {
-                                namesHtml += `<div style="width:55px; text-align:center; font-weight:bold; font-size:12px;">${displayStr}</div>`;
+                                namesHtml += `<div style="flex:1; text-align:center; font-weight:bold; font-size:11px;">${displayStr}</div>`;
                             }
                         });
                     } else {
@@ -164,7 +167,7 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
                                     let itemId = `drag-${month}-${day}-${baseLoc}-${idx}-${rawName}`;
                                     namesHtml += `<span class="draggable-name" draggable="true" id="${itemId}" data-tm="${tm}" data-name="${rawName}">${displayStr}</span>`;
                                 } else {
-                                    namesHtml += `<span style="font-weight:bold; font-size:12px; margin-right:4px;">${displayStr}</span>`;
+                                    namesHtml += `<span style="font-weight:bold; font-size:11px; margin-right:2px;">${displayStr}</span>`;
                                 }
                             });
                         }
@@ -176,7 +179,7 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
         }
     }
     
-    return `<div class="cal-date" style="display: flex; align-items: center; margin-bottom: 4px;"><span style="font-size: 15px;">${day}</span>${bigoStr}</div>` + result;
+    return `<div class="cal-date" style="display: flex; align-items: center; margin-bottom: 2px;"><span style="font-size: 13px;">${day}</span>${bigoStr}</div>` + result;
 }
 
 function setupDragAndDrop() {
