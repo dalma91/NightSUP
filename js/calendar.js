@@ -1,191 +1,176 @@
-// 전체 감독표를 달력 형태로 그려주는 시각화 알고리즘 파일입니다.
-
-async function initCalendar(isAdmin) {
-    currentCalYear = new Date().getFullYear(); currentCalMonth = new Date().getMonth() + 1;
-    await loadAndRenderCalendar(isAdmin);
-}
-
-async function changeMonth(delta, isAdmin) {
-    currentCalMonth += delta;
-    if (currentCalMonth > 12) { currentCalMonth = 1; currentCalYear++; } else if (currentCalMonth < 1) { currentCalMonth = 12; currentCalYear--; }
-    await loadAndRenderCalendar(isAdmin);
-}
-
-async function loadAndRenderCalendar(isAdmin) {
-    showLoading(true);
-    try {
-        await initSupervisorData();
-        const calendarHtml = buildCalendarHTML(currentCalYear, currentCalMonth, globalSheetData, globalHeaders, isAdmin);
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>야간자율학습 감독일자 확인</title>
+    <style>
+        body { font-family: 'Malgun Gothic', sans-serif; background-color: #f4f7f6; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 95%; max-width: 800px; text-align: center; box-sizing: border-box; }
         
-        if (isAdmin) {
-            document.getElementById('adminCalendarTitle').innerText = currentCalYear + '년 ' + currentCalMonth + '월';
-            document.getElementById('adminCalendarContainer').innerHTML = calendarHtml;
-            setupDragAndDrop(); 
-            switchScreen('adminScreen');
-        } else {
-            document.getElementById('calendarTitle').innerText = currentCalYear + '년 ' + currentCalMonth + '월';
-            document.getElementById('calendarContainer').innerHTML = calendarHtml;
-            switchScreen('calendarScreen');
+        #loginScreen, #adminLoginScreen { max-width: 380px; padding: 40px 20px; }
+        
+        /* ★ 달력과 계정 관리 화면의 폭을 대폭 확장하여 글자 꺾임 방지 ★ */
+        #calendarScreen, #adminScreen, #superAdminScreen { max-width: 1500px; width: 98%; }
+        
+        h1 { font-size: 22px; color: #333; margin-bottom: 25px; }
+        .input-group { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
+        
+        input[type="text"], input[type="password"] { width: 85%; padding: 14px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; text-align: center; box-sizing: border-box; transition: 0.3s; }
+        input[type="text"]:focus, input[type="password"]:focus { border-color: #4CAF50; outline: none; box-shadow: 0 0 5px rgba(76, 175, 80, 0.3); }
+        
+        button { width: 85%; background-color: #4CAF50; color: white; border: none; padding: 14px 20px; font-size: 15px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-bottom: 10px; transition: 0.2s; box-sizing: border-box;}
+        button.cal-btn { background-color: #3498db; }
+        
+        .admin-link-box { width: 85%; margin: 0 auto; text-align: right; }
+        button.admin-btn { background-color: transparent; color: #7f8c8d; font-size: 13px; font-weight: normal; text-decoration: underline; width: auto; padding: 5px; margin-top: 5px; }
+        button.admin-btn:hover { color: #34495e; background-color: transparent; }
+        
+        button.save-btn { background-color: #e74c3c; width: auto; padding: 10px 20px; margin: 0; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        button:hover { opacity: 0.9; }
+        .back-btn { background-color: #7f8c8d; width: 85%; padding: 12px 20px; margin-top: 20px; }
+        
+        #loading { display: none; color: #e67e22; font-weight: bold; font-size: 14px; margin-top: 15px; }
+        
+        .month-filter-container { display: none; flex-wrap: wrap; justify-content: center; gap: 6px; margin-bottom: 20px; }
+        .month-btn { background-color: #ecf0f1; color: #2c3e50; border: 1px solid #bdc3c7; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 13px; width: auto; font-weight: normal; margin: 0;}
+        .month-btn.active { background-color: #4CAF50; color: white; border-color: #4CAF50; font-weight: bold; }
+        
+        .result-area, #calendarScreen, #adminLoginScreen, #adminScreen, #superAdminScreen { display: none; text-align: left; }
+        .month-section { margin-bottom: 20px; }
+        .month-title { font-weight: bold; font-size: 18px; color: #2c3e50; border-bottom: 2px solid #4CAF50; padding-bottom: 5px; margin-bottom: 10px; }
+        .date-list { list-style-type: none; padding: 0; margin: 0; }
+        .date-list li { background: #e8f5e9; margin-bottom: 8px; padding: 12px; border-radius: 5px; color: #333; font-size: 15px; line-height: 1.5; }
+        .error-text { color: #e74c3c; font-weight: bold; text-align: center; margin-top: 20px; }
+        
+        .calendar-header { display: flex; justify-content: center; align-items: center; margin-bottom: 15px; }
+        .cal-nav-btn { background-color: #f39c12; width: auto; padding: 8px 15px; font-size: 15px; margin: 0 15px; }
+        .calendar-table { width: 100%; border-collapse: collapse; margin-top: 10px; table-layout: fixed; }
+        .calendar-table th, .calendar-table td { border: 1px solid #ddd; padding: 6px; vertical-align: top; height: 110px; overflow: hidden; }
+        .calendar-table th { background-color: #f8f9fa; text-align: center; height: auto; padding: 10px 0; font-size: 15px; }
+        .calendar-table th:first-child, .calendar-table td:first-child { color: red; } 
+        .calendar-table th:last-child, .calendar-table td:last-child { color: blue; } 
+        .cal-date { font-weight: bold; margin-bottom: 5px; text-align: left; font-size: 15px; }
+        
+        .cal-item { border-radius: 4px; margin-bottom: 4px; border-left: 4px solid #ccc; display: flex; align-items: center; padding: 4px; min-height: 25px; }
+        
+        .draggable-name { cursor: grab; background-color: rgba(255,255,255,0.8); border: 1px dashed #aaa; padding: 2px 5px; border-radius: 3px; display: inline-block; margin: 2px; transition: 0.2s; font-weight:bold; font-size:12.5px; z-index: 10;}
+        .draggable-name:active { cursor: grabbing; opacity: 0.5; }
+        .drop-zone { min-height: 25px; padding: 2px; flex-grow: 1; display: flex; flex-wrap: wrap; align-items: center;}
+        .drop-zone.over { background-color: rgba(243, 156, 18, 0.3); border-radius: 4px; border: 2px dashed #f39c12;}
+
+        .admin-table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 25px; }
+        .admin-table th, .admin-table td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        .admin-table th { background-color: #2c3e50; color: white; }
+        .del-btn { background-color: #e74c3c; width: auto; padding: 6px 12px; font-size: 13px; margin: 0; }
+        .add-btn { background-color: #27ae60; width: auto; padding: 12px 20px; font-size: 15px; margin: 0; }
+
+        @media (max-width: 768px) {
+            .calendar-table th, .calendar-table td { padding: 3px; height: 90px; }
+            .cal-item { padding: 3px; }
+            .cal-date { font-size: 13px; }
         }
-    } catch (error) { alert('오류 발생: ' + error.message); } finally { showLoading(false); }
-}
+    </style>
+</head>
+<body>
 
-function buildCalendarHTML(year, month, rows, headers, isAdmin) {
-    const firstDay = new Date(year, month - 1, 1).getDay();
-    const daysInMonth = new Date(year, month, 0).getDate(); 
-    let html = '<table class="calendar-table"><tr><th>일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th></tr><tr>';
-
-    let dayCount = 1;
-    for (let i = 0; i < 42; i++) {
-        if (i < firstDay || dayCount > daysInMonth) html += '<td></td>';
-        else {
-            const dayDataHtml = findDataForCalendar(rows, month, dayCount, headers, isAdmin);
-            html += `<td><div class="cal-date">${dayCount}</div>${dayDataHtml}</td>`;
-            dayCount++;
-        }
-        if ((i + 1) % 7 === 0) html += '</tr><tr>';
-    }
-    return html + '</tr></table>';
-}
-
-function findDataForCalendar(rows, month, day, headers, isAdmin) {
-    let result = '';
-    const searchStr1 = month + '/' + day; const searchStr2 = month + '.' + day;
+<div class="container" id="loginScreen">
+    <h1>🏫 감독 일정 확인</h1>
+    <div class="input-group">
+        <input type="text" id="teacherName" placeholder="선생님 성함을 입력하세요" style="ime-mode: active;" onkeyup="if(window.event.keyCode==13){checkDates()}">
+        <button onclick="checkDates()">내 일정 검색</button>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center;">
+        <button class="cal-btn" onclick="initCalendar(false)">전체 달력 보기</button>
+    </div>
     
-    for (let i = 1; i < rows.length; i++) {
-        const row = rows[i]; if (!row || !row[0]) continue;
-        const sheetDate = row[0].replace(/\s/g, ''); 
-        
-        if (sheetDate === searchStr1 || sheetDate === searchStr2 || sheetDate.includes(month + '월' + day + '일')) {
-            
-            // ★ 핵심 변경: 해당 날짜가 확인되면 무조건 4개의 층 배열을 미리 생성해 둡니다.
-            let groups = { '2층': [], '3층': [], '4층': [], '사감': [] }; 
-            
-            let bigoList = []; 
-            let dayTimeMarks = [];
-            let totalTeacherCount = 0; // 해당 날짜에 데이터가 1개라도 있는지 확인하는 변수
+    <div class="admin-link-box">
+        <button class="admin-btn" onclick="switchScreen('adminLoginScreen')">⚙️ 관리자 모드</button>
+    </div>
+    <div id="loading">데이터를 불러오는 중입니다...</div>
+</div>
 
-            for (let j = 2; j < row.length; j++) {
-                if (row[j] && row[j].trim() !== '') {
-                    let loc = headers[j] ? headers[j].trim() : '기타';
-                    if (loc.includes('비고')) {
-                        bigoList.push(row[j]);
-                        totalTeacherCount++;
-                    }
-                    else {
-                        let baseLoc = loc; let timeMark = '';
-                        if (loc.includes('2층')) { baseLoc = '2층'; timeMark = loc.replace('2층', '').replace(/[\(\)]/g, '').trim(); }
-                        else if (loc.includes('3층')) { baseLoc = '3층'; timeMark = loc.replace('3층', '').replace(/[\(\)]/g, '').trim(); }
-                        else if (loc.includes('4층')) { baseLoc = '4층'; timeMark = loc.replace('4층', '').replace(/[\(\)]/g, '').trim(); }
-                        else if (loc.includes('사감')) { baseLoc = '사감'; timeMark = loc.replace('사감', '').replace(/[\(\)]/g, '').trim(); }
-                        
-                        if (timeMark && !dayTimeMarks.includes(timeMark)) dayTimeMarks.push(timeMark);
-                        
-                        if (!groups[baseLoc]) groups[baseLoc] = []; // 예외적인 층 이름이 있을 경우 대비
-                        groups[baseLoc].push({ name: row[j].trim(), timeMark: timeMark });
-                        totalTeacherCount++;
-                    }
-                }
-            }
+<div class="container result-area" id="resultScreen">
+    <h1 id="resultTitle" style="text-align: center;"></h1>
+    <div class="month-filter-container" id="monthFilterContainer"></div>
+    <div id="resultsContainer"></div>
+    <div style="text-align: center;"><button class="back-btn" style="width:auto; padding:10px 30px;" onclick="goBack()">돌아가기</button></div>
+</div>
 
-            // ★ 해당 일자에 감독교사(또는 비고)가 1명이라도 존재하면, 무조건 모든 층 박스를 그립니다.
-            if (totalTeacherCount > 0) {
-                let showTimeHeaders = Object.values(groups).some(g => g.length >= 2);
-                let topHeaderHtml = `<div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom: 5px; min-height: 16px;">`;
-                topHeaderHtml += `<div style="color: #e74c3c; font-size: 12px; font-weight: bold; padding-right: 4px;">${bigoList.join(', ')}</div>`;
-                if (showTimeHeaders) {
-                    topHeaderHtml += `<div style="display:flex; gap:5px; justify-content:flex-end;">`;
-                    dayTimeMarks.forEach(tm => { topHeaderHtml += `<div style="width:55px; text-align:center; font-size:11.5px; color:#555; font-weight:bold;">${tm}</div>`; });
-                    topHeaderHtml += `</div>`;
-                }
-                result += topHeaderHtml + `</div>`;
+<div class="container" id="calendarScreen">
+    <div class="calendar-header">
+        <button class="cal-nav-btn" onclick="changeMonth(-1, false)">◀ 이전</button>
+        <span id="calendarTitle" style="font-size:22px; font-weight:bold;"></span>
+        <button class="cal-nav-btn" onclick="changeMonth(1, false)">다음 ▶</button>
+    </div>
+    <div id="calendarContainer"></div>
+    <div style="text-align: center;"><button class="back-btn" style="width:auto; padding:10px 30px;" onclick="goBack()">돌아가기</button></div>
+</div>
 
-                const locOrder = ['2층', '3층', '4층', '사감'];
-                const sortedLocs = locOrder.concat(Object.keys(groups).filter(l => !locOrder.includes(l)));
+<div class="container" id="adminLoginScreen">
+    <h1>⚙️ 관리자 로그인</h1>
+    <div class="input-group" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
+        <input type="text" id="adminId" placeholder="관리자 이름" style="ime-mode: active;">
+        <input type="password" id="adminPw" placeholder="비밀번호" style="ime-mode: disabled;" onkeyup="if(window.event.keyCode==13){adminLogin()}">
+        <button style="background-color: #34495e;" onclick="adminLogin()">로그인</button>
+    </div>
+    <div style="display: flex; justify-content: center;">
+        <button class="back-btn" onclick="goBack()">돌아가기</button>
+    </div>
+</div>
 
-                for (let baseLoc of sortedLocs) {
-                    let group = groups[baseLoc];
-                    let textColor = '#333'; let bgColor = '#f8f9fa'; let borderColor = '#ccc';
-                    
-                    if (baseLoc === '2층') { textColor = 'black'; bgColor = '#fdfdfd'; borderColor = '#333'; } 
-                    else if (baseLoc === '3층') { textColor = '#0056b3'; bgColor = '#e3f2fd'; borderColor = '#0056b3'; } 
-                    else if (baseLoc === '4층') { textColor = '#198754'; bgColor = '#e8f5e9'; borderColor = '#198754'; }
-                    else if (baseLoc === '사감') { textColor = '#8e44ad'; bgColor = '#f4ecf7'; borderColor = '#8e44ad'; }
+<div class="container" id="adminScreen">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 10px;">
+        <h1 style="color: #e74c3c; margin:0;">🛠️ 관리자 모드 (드래그 저장)</h1>
+        <div style="display: flex; gap: 10px;">
+            <button id="superAdminBtn" class="save-btn" style="background-color: #2980b9; display: none;" onclick="openSuperAdminMenu()">👑 계정 관리</button>
+            <button class="save-btn" style="background-color: #8e44ad;" onclick="changeAdminPassword()">🔑 비번 변경</button>
+            <button class="save-btn" onclick="saveAdminChanges()">💾 저장하기</button>
+        </div>
+    </div>
+    
+    <div class="calendar-header">
+        <button class="cal-nav-btn" onclick="changeMonth(-1, true)">◀ 이전</button>
+        <span id="adminCalendarTitle" style="font-size:22px; font-weight:bold;"></span>
+        <button class="cal-nav-btn" onclick="changeMonth(1, true)">다음 ▶</button>
+    </div>
+    <div id="adminCalendarContainer"></div>
+    <div style="text-align: center;"><button class="back-btn" style="width:auto; padding:10px 30px;" onclick="goBack()">로그아웃 및 돌아가기</button></div>
+</div>
 
-                    result += `<div class="cal-item" style="color: ${textColor}; background-color: ${bgColor}; border-left-color: ${borderColor};">`;
-                    
-                    let namesHtml = `<div class="drop-zone" data-loc="${baseLoc}" data-month="${month}" data-day="${day}" style="justify-content:flex-end; width:100%;">`;
+<div class="container" id="superAdminScreen">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 10px;">
+        <h1 style="color: #2980b9; margin:0;">👑 최고관리자: 계정 관리</h1>
+        <button class="save-btn" onclick="saveSuperAdminChanges()">💾 시트에 최종 저장</button>
+    </div>
+    
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>관리자 이름(ID)</th>
+                <th>비밀번호</th>
+                <th>관리</th>
+            </tr>
+        </thead>
+        <tbody id="adminListBody"></tbody>
+    </table>
 
-                    if (showTimeHeaders) {
-                        // 시간대(오후/야간) 구분이 있는 날
-                        dayTimeMarks.forEach(tm => {
-                            let person = group.find(g => g.timeMark === tm);
-                            let rawName = person ? person.name : '';
-                            let displayStr = rawName;
-                            if (baseLoc === '사감' && displayStr) displayStr = `사감 ${displayStr}`;
-                            
-                            if(isAdmin && displayStr) {
-                                let itemId = `drag-${month}-${day}-${baseLoc}-${tm}-${rawName}`;
-                                namesHtml += `<div style="width:55px; text-align:center;"><span class="draggable-name" draggable="true" id="${itemId}" data-tm="${tm}" data-name="${rawName}">${displayStr}</span></div>`;
-                            } else {
-                                // 사람이 없더라도 55px 빈 공간(드롭존)을 출력하여 칸 맞춤
-                                namesHtml += `<div style="width:55px; text-align:center; font-weight:bold; font-size:12.5px;">${displayStr}</div>`;
-                            }
-                        });
-                    } else {
-                        // 시간대 구분이 없는 날
-                        if (group.length > 0) {
-                            group.forEach((g, idx) => {
-                                let rawName = g.name;
-                                let displayStr = baseLoc === '사감' ? `사감 ${rawName}` : rawName;
-                                if(isAdmin) {
-                                    let tm = g.timeMark || '';
-                                    let itemId = `drag-${month}-${day}-${baseLoc}-${idx}-${rawName}`;
-                                    namesHtml += `<span class="draggable-name" draggable="true" id="${itemId}" data-tm="${tm}" data-name="${rawName}">${displayStr}</span>`;
-                                } else {
-                                    namesHtml += `<span style="font-weight:bold; font-size:12.5px; margin-right:5px;">${displayStr}</span>`;
-                                }
-                            });
-                        }
-                        // group.length === 0 인 경우 아무것도 넣지 않음. (드롭존 CSS가 알아서 최소 높이를 잡아줌)
-                    }
-                    result += namesHtml + `</div></div>`;
-                }
-            }
-            break; // 해당 날짜 처리가 끝났으므로 행 반복 종료
-        }
-    }
-    return result;
-}
+    <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;">
+        <input type="text" id="newAdminId" placeholder="새 관리자 이름" style="width: 35%; margin-bottom: 0;" style="ime-mode: active;">
+        <input type="password" id="newAdminPw" placeholder="새 비밀번호" style="width: 35%; margin-bottom: 0;" style="ime-mode: disabled;">
+        <button class="add-btn" onclick="addNewAdmin()">➕ 추가하기</button>
+    </div>
 
-function setupDragAndDrop() {
-    const draggables = document.querySelectorAll('.draggable-name');
-    const dropZones = document.querySelectorAll('.drop-zone');
+    <div style="text-align: center;"><button class="back-btn" style="width:auto; padding:10px 30px;" onclick="switchScreen('adminScreen')">캘린더로 돌아가기</button></div>
+</div>
 
-    draggables.forEach(draggable => {
-        draggable.addEventListener('dragstart', (e) => {
-            e.dataTransfer.setData('text/plain', draggable.id);
-            setTimeout(() => draggable.style.display = 'none', 0);
-        });
-        draggable.addEventListener('dragend', () => { draggable.style.display = 'inline-block'; });
-    });
+<!-- 기능별로 완벽하게 분리된 라이브러리 파일들 (캐시 방지 v=3) -->
+<script src="js/config.js?v=3"></script>
+<script src="js/api.js?v=3"></script>
+<script src="js/ui.js?v=3"></script>
+<script src="js/search.js?v=3"></script>
+<script src="js/calendar.js?v=3"></script>
+<script src="js/admin.js?v=3"></script>
 
-    dropZones.forEach(zone => {
-        zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('over'); });
-        zone.addEventListener('dragleave', () => { zone.classList.remove('over'); });
-        zone.addEventListener('drop', (e) => {
-            e.preventDefault(); zone.classList.remove('over');
-            const id = e.dataTransfer.getData('text/plain');
-            const draggableElement = document.getElementById(id);
-            
-            if (draggableElement) {
-                if(e.target.tagName === 'DIV' && e.target.parentElement.classList.contains('drop-zone')) {
-                     e.target.innerHTML = ''; 
-                     e.target.appendChild(draggableElement);
-                } else if (e.target.classList.contains('drop-zone')) {
-                    zone.appendChild(draggableElement);
-                }
-            }
-        });
-    });
-}
+</body>
+</html>
