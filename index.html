@@ -5,23 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>야간자율학습 감독일자 확인</title>
     <style>
+        /* 1. 배경을 화면 정중앙에 배치하는 기본 설정 */
         body { font-family: 'Malgun Gothic', sans-serif; background-color: #f4f7f6; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 95%; max-width: 800px; text-align: center; }
         
+        /* 2. 모든 박스의 기본 둥글기 및 그림자 효과 */
+        .container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 95%; max-width: 800px; text-align: center; box-sizing: border-box; }
+        
+        /* ★ 핵심: 로그인 화면과 관리자 로그인 화면만 작고 아담하게 축소 ★ */
+        #loginScreen, #adminLoginScreen { max-width: 380px; padding: 40px 20px; }
+        
+        /* 달력과 계정 관리 화면은 데이터를 많이 봐야 하므로 넓게 유지 */
         #calendarScreen, #adminScreen, #superAdminScreen { max-width: 1200px; }
         
-        h1 { font-size: 22px; color: #333; margin-bottom: 20px; }
-        .input-group { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
-        input[type="text"], input[type="password"] { width: 70%; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; text-align: center; }
+        h1 { font-size: 22px; color: #333; margin-bottom: 25px; }
         
-        button { background-color: #4CAF50; color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 5px; cursor: pointer; width: 75%; font-weight: bold; margin-bottom: 10px;}
+        /* 3. 입력칸과 버튼들을 세로로 예쁘게 가운데 정렬 */
+        .input-group { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
+        
+        /* 입력칸 디자인 세련되게 다듬기 */
+        input[type="text"], input[type="password"] { width: 85%; padding: 14px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; text-align: center; box-sizing: border-box; transition: 0.3s; }
+        input[type="text"]:focus, input[type="password"]:focus { border-color: #4CAF50; outline: none; box-shadow: 0 0 5px rgba(76, 175, 80, 0.3); }
+        
+        /* 4. 버튼들을 로그인 박스 비율(85%)에 맞춰 꽉 차고 안정감 있게 설정 */
+        button { width: 85%; background-color: #4CAF50; color: white; border: none; padding: 14px 20px; font-size: 15px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-bottom: 10px; transition: 0.2s; box-sizing: border-box;}
         button.cal-btn { background-color: #3498db; }
-        button.admin-btn { background-color: #34495e; width: auto; font-size: 13px; padding: 8px 15px; margin-top: 15px;}
+        
+        /* 5. 관리자 로그인 버튼을 우측 하단에 조그마한 텍스트 링크처럼 변경 */
+        .admin-link-box { width: 85%; margin: 0 auto; text-align: right; }
+        button.admin-btn { background-color: transparent; color: #7f8c8d; font-size: 13px; font-weight: normal; text-decoration: underline; width: auto; padding: 5px; margin-top: 5px; }
+        button.admin-btn:hover { color: #34495e; background-color: transparent; }
+        
+        /* 상단 네비게이션 버튼 등 기타 버튼들 사이즈 원상복구용 */
         button.save-btn { background-color: #e74c3c; width: auto; padding: 10px 20px; margin: 0; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
         button:hover { opacity: 0.9; }
+        .back-btn { background-color: #7f8c8d; width: 85%; padding: 12px 20px; margin-top: 20px; }
         
-        #loading { display: none; color: #e67e22; font-weight: bold; font-size: 15px; margin-top: 15px; }
-        .back-btn { background-color: #7f8c8d; width: auto; padding: 10px 30px; margin-top: 20px; }
+        #loading { display: none; color: #e67e22; font-weight: bold; font-size: 14px; margin-top: 15px; }
         
         .month-filter-container { display: none; flex-wrap: wrap; justify-content: center; gap: 6px; margin-bottom: 20px; }
         .month-btn { background-color: #ecf0f1; color: #2c3e50; border: 1px solid #bdc3c7; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 13px; width: auto; font-weight: normal; margin: 0;}
@@ -65,28 +84,33 @@
 </head>
 <body>
 
+<!-- 메인 로그인 화면 -->
 <div class="container" id="loginScreen">
-    <h1>🏫 야간자율학습 감독 확인</h1>
+    <h1>🏫 감독 일정 확인</h1>
     <div class="input-group">
-        <input type="text" id="teacherName" placeholder="선생님 성함을 입력하세요" style="ime-mode: active;">
-        <button onclick="checkDates()">내 일정 검색 (월별 확인)</button>
+        <input type="text" id="teacherName" placeholder="선생님 성함을 입력하세요" style="ime-mode: active;" onkeyup="if(window.event.keyCode==13){checkDates()}">
+        <button onclick="checkDates()">내 일정 검색</button>
     </div>
-    <div>
+    <div style="display: flex; flex-direction: column; align-items: center;">
         <button class="cal-btn" onclick="initCalendar(false)">전체 달력 보기</button>
     </div>
-    <div style="text-align: right;">
-        <button class="admin-btn" onclick="switchScreen('adminLoginScreen')">⚙️ 관리자 로그인</button>
+    
+    <!-- 우측 하단에 조그맣게 배치된 관리자 로그인 텍스트 -->
+    <div class="admin-link-box">
+        <button class="admin-btn" onclick="switchScreen('adminLoginScreen')">⚙️ 관리자 모드</button>
     </div>
-    <div id="loading">데이터를 불러오는 중입니다... 잠시만 기다려주세요.</div>
+    <div id="loading">데이터를 불러오는 중입니다...</div>
 </div>
 
+<!-- 개인 리스트 결과 화면 -->
 <div class="container result-area" id="resultScreen">
     <h1 id="resultTitle" style="text-align: center;"></h1>
     <div class="month-filter-container" id="monthFilterContainer"></div>
     <div id="resultsContainer"></div>
-    <div style="text-align: center;"><button class="back-btn" onclick="goBack()">돌아가기</button></div>
+    <div style="text-align: center;"><button class="back-btn" style="width:auto; padding:10px 30px;" onclick="goBack()">돌아가기</button></div>
 </div>
 
+<!-- 일반 교사용 달력 화면 -->
 <div class="container" id="calendarScreen">
     <div class="calendar-header">
         <button class="cal-nav-btn" onclick="changeMonth(-1, false)">◀ 이전</button>
@@ -94,19 +118,23 @@
         <button class="cal-nav-btn" onclick="changeMonth(1, false)">다음 ▶</button>
     </div>
     <div id="calendarContainer"></div>
-    <div style="text-align: center;"><button class="back-btn" onclick="goBack()">돌아가기</button></div>
+    <div style="text-align: center;"><button class="back-btn" style="width:auto; padding:10px 30px;" onclick="goBack()">돌아가기</button></div>
 </div>
 
+<!-- 관리자 로그인 화면 (메인화면과 동일하게 작고 아담하게 적용됨) -->
 <div class="container" id="adminLoginScreen">
     <h1>⚙️ 관리자 로그인</h1>
-    <div class="input-group">
+    <div class="input-group" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
         <input type="text" id="adminId" placeholder="관리자 이름" style="ime-mode: active;">
         <input type="password" id="adminPw" placeholder="비밀번호" style="ime-mode: disabled;" onkeyup="if(window.event.keyCode==13){adminLogin()}">
         <button style="background-color: #34495e;" onclick="adminLogin()">로그인</button>
     </div>
-    <div style="text-align: center;"><button class="back-btn" onclick="goBack()">돌아가기</button></div>
+    <div style="display: flex; justify-content: center;">
+        <button class="back-btn" onclick="goBack()">돌아가기</button>
+    </div>
 </div>
 
+<!-- 관리자 전용 캘린더 화면 -->
 <div class="container" id="adminScreen">
     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 10px;">
         <h1 style="color: #e74c3c; margin:0;">🛠️ 관리자 모드 (드래그 저장)</h1>
@@ -123,9 +151,10 @@
         <button class="cal-nav-btn" onclick="changeMonth(1, true)">다음 ▶</button>
     </div>
     <div id="adminCalendarContainer"></div>
-    <div style="text-align: center;"><button class="back-btn" onclick="goBack()">로그아웃 및 돌아가기</button></div>
+    <div style="text-align: center;"><button class="back-btn" style="width:auto; padding:10px 30px;" onclick="goBack()">로그아웃 및 돌아가기</button></div>
 </div>
 
+<!-- 최고관리자 계정 관리 화면 -->
 <div class="container" id="superAdminScreen">
     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 10px;">
         <h1 style="color: #2980b9; margin:0;">👑 최고관리자: 계정 관리</h1>
@@ -144,12 +173,12 @@
     </table>
 
     <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;">
-        <input type="text" id="newAdminId" placeholder="새 관리자 이름" style="width: 35%; padding: 10px; ime-mode: active;">
-        <input type="password" id="newAdminPw" placeholder="새 비밀번호" style="width: 35%; padding: 10px; ime-mode: disabled;">
+        <input type="text" id="newAdminId" placeholder="새 관리자 이름" style="width: 35%; margin-bottom: 0;" style="ime-mode: active;">
+        <input type="password" id="newAdminPw" placeholder="새 비밀번호" style="width: 35%; margin-bottom: 0;" style="ime-mode: disabled;">
         <button class="add-btn" onclick="addNewAdmin()">➕ 추가하기</button>
     </div>
 
-    <div style="text-align: center;"><button class="back-btn" onclick="switchScreen('adminScreen')">캘린더로 돌아가기</button></div>
+    <div style="text-align: center;"><button class="back-btn" style="width:auto; padding:10px 30px;" onclick="switchScreen('adminScreen')">캘린더로 돌아가기</button></div>
 </div>
 
 <!-- 기능별로 완벽하게 분리된 라이브러리 파일들 (순서 유지 필수) -->
