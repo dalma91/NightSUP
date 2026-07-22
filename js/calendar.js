@@ -91,7 +91,6 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
                         else if (loc.includes('4층')) { baseLoc = '4층'; timeMark = loc.replace('4층', '').replace(/[\(\)]/g, '').trim(); }
                         else if (loc.includes('사감')) { baseLoc = '사감'; timeMark = loc.replace('사감', '').replace(/[\(\)]/g, '').trim(); }
                         
-                        // ★ 핵심 수정: 괄호 안에 시간대가 안 적혀있으면(예: '사감') 무조건 '야간(디폴트)'으로 간주합니다!
                         if (timeMark === '') timeMark = '야간';
                         
                         if (!dayTimeMarks.includes(timeMark)) dayTimeMarks.push(timeMark);
@@ -144,8 +143,9 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
                         dayTimeMarks.forEach(tm => {
                             let person = group.find(g => g.timeMark === tm);
                             let rawName = person ? person.name : '';
-                            let displayStr = rawName;
-                            if (baseLoc === '사감' && displayStr) displayStr = `사감 ${displayStr}`;
+                            
+                            // ★ "사감 " 이라는 글자를 억지로 붙이는 코드를 완전히 삭제했습니다!
+                            let displayStr = rawName; 
                             
                             if(isAdmin && displayStr) {
                                 let itemId = `drag-${month}-${day}-${baseLoc}-${tm}-${rawName}`;
@@ -158,7 +158,7 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
                         if (group.length > 0) {
                             group.forEach((g, idx) => {
                                 let rawName = g.name;
-                                let displayStr = baseLoc === '사감' ? `사감 ${rawName}` : rawName;
+                                let displayStr = rawName; // 여기도 통일 완료
                                 if(isAdmin) {
                                     let tm = g.timeMark || '';
                                     let itemId = `drag-${month}-${day}-${baseLoc}-${idx}-${rawName}`;

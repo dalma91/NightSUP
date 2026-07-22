@@ -45,8 +45,6 @@
         .cal-nav-btn { background-color: #f39c12; width: auto; padding: 8px 15px; font-size: 15px; margin: 0 15px; }
         
         .calendar-table { width: 100%; border-collapse: collapse; margin-top: 10px; table-layout: fixed; }
-        
-        /* ★ 셀의 기본 높이와 안쪽 여백(padding)을 대폭 줄였습니다 ★ */
         .calendar-table th, .calendar-table td { border: 1px solid #ddd; padding: 4px; vertical-align: top; height: 70px; overflow: hidden; }
         .calendar-table th { background-color: #f8f9fa; text-align: center; height: auto; padding: 8px 0; font-size: 14px; }
         .calendar-table th:first-child, .calendar-table td:first-child { color: red; } 
@@ -54,17 +52,15 @@
         
         .cal-date { font-weight: bold; margin-bottom: 4px; text-align: left; font-size: 14px; }
         
-        /* ★ 블록(cal-item)의 높이, 여백, 테두리 굵기를 슬림하게 조정했습니다 ★ */
         .cal-item { border-radius: 3px; margin-bottom: 2px; border-left: 3px solid #ccc; display: flex; align-items: center; padding: 2px; min-height: 20px; }
         
         .draggable-name { cursor: grab; background-color: rgba(255,255,255,0.8); border: 1px dashed #aaa; padding: 1px 4px; border-radius: 3px; display: inline-block; margin: 1px; transition: 0.2s; font-weight:bold; font-size:12px; z-index: 10;}
         .draggable-name:active { cursor: grabbing; opacity: 0.5; }
         
-        /* ★ 드래그 영역(drop-zone)의 최소 높이도 20px로 줄였습니다 ★ */
         .drop-zone { min-height: 20px; padding: 1px; flex-grow: 1; display: flex; flex-wrap: wrap; align-items: center;}
         .drop-zone.over { background-color: rgba(243, 156, 18, 0.3); border-radius: 4px; border: 2px dashed #f39c12;}
 
-        .admin-table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 25px; }
+        .admin-table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 15px; }
         .admin-table th, .admin-table td { border: 1px solid #ddd; padding: 10px; text-align: center; }
         .admin-table th { background-color: #2c3e50; color: white; }
         .del-btn { background-color: #e74c3c; width: auto; padding: 6px 12px; font-size: 13px; margin: 0; }
@@ -160,22 +156,23 @@
         <tbody id="adminListBody"></tbody>
     </table>
 
-    <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;">
-        <input type="text" id="newAdminId" placeholder="새 관리자 이름" style="width: 35%; margin-bottom: 0;" style="ime-mode: active;">
-        <input type="password" id="newAdminPw" placeholder="새 비밀번호" style="width: 35%; margin-bottom: 0;" style="ime-mode: disabled;">
+    <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 5px;">
+        <input type="text" id="newAdminId" placeholder="새 관리자 이름" style="width: 50%; margin-bottom: 0;" style="ime-mode: active;">
+        <!-- ★ 초기 비밀번호는 12345678로 자동 세팅되므로 입력칸을 삭제했습니다 ★ -->
         <button class="add-btn" onclick="addNewAdmin()">➕ 추가하기</button>
     </div>
+    <p style="text-align: center; font-size: 13px; color: #7f8c8d; margin-top: 0; margin-bottom: 20px;">* 새 관리자 추가 시 초기 비밀번호는 <b>12345678</b> 로 자동 설정됩니다.</p>
 
     <div style="text-align: center;"><button class="back-btn" style="width:auto; padding:10px 30px;" onclick="switchScreen('adminScreen')">캘린더로 돌아가기</button></div>
 </div>
 
-<!-- 스크립트 캐시 방지 버전 v=6 로 업데이트 -->
-<script src="js/config.js?v=6"></script>
-<script src="js/api.js?v=6"></script>
-<script src="js/ui.js?v=6"></script>
-<script src="js/search.js?v=6"></script>
-<script src="js/calendar.js?v=6"></script>
-<script src="js/admin.js?v=6"></script>
+<!-- 스크립트 캐시 방지 버전 v=9 로 업데이트 -->
+<script src="js/config.js?v=9"></script>
+<script src="js/api.js?v=9"></script>
+<script src="js/ui.js?v=9"></script>
+<script src="js/search.js?v=9"></script>
+<script src="js/calendar.js?v=9"></script>
+<script src="js/admin.js?v=9"></script>
 
 </body>
 </html>

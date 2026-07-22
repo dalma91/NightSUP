@@ -47,23 +47,45 @@ function renderAdminList() {
     for (let i = 1; i < globalAdminData.length; i++) {
         let row = globalAdminData[i];
         if (!row || row.length === 0) continue;
-        let id = row[0] || ''; let pw = row[1] || '';
+        let id = row[0] || ''; 
         let isSuper = (i === 1);
-        let btnHtml = isSuper ? `<span style="color:#7f8c8d; font-weight:bold;">삭제 불가 (최고관리자)</span>` : `<button class="del-btn" onclick="deleteAdmin(${i})">🗑️ 삭제</button>`;
-        tbody.innerHTML += `<tr><td style="font-weight:bold;">${id} ${isSuper ? '👑' : ''}</td><td>${pw}</td><td>${btnHtml}</td></tr>`;
+        
+        // ★ 화면에 비밀번호가 노출되지 않도록 마스킹(********) 처리합니다.
+        let pwDisplay = '********'; 
+        
+        // ★ 최고관리자는 본인 권한 수정 불가, 일반 관리자는 [비번초기화]와 [삭제] 버튼 제공
+        let btnHtml = isSuper ? 
+            `<span style="color:#7f8c8d; font-weight:bold;">관리 불가 (최고관리자)</span>` : 
+            `<button class="save-btn" style="background-color: #f39c12; width: auto; padding: 6px 12px; font-size: 13px; margin: 0 5px 0 0;" onclick="resetAdminPassword(${i})">🔄 비번초기화</button>` +
+            `<button class="del-btn" onclick="deleteAdmin(${i})">🗑️ 삭제</button>`;
+            
+        tbody.innerHTML += `<tr><td style="font-weight:bold;">${id} ${isSuper ? '👑' : ''}</td><td>${pwDisplay}</td><td>${btnHtml}</td></tr>`;
     }
+}
+
+// ★ 비밀번호 초기화 (12345678) 함수 추가
+function resetAdminPassword(index) {
+    let adminName = globalAdminData[index][0];
+    if (!confirm(`'${adminName}' 관리자의 비밀번호를 '12345678'로 초기화하시겠습니까?`)) return;
+    
+    globalAdminData[index][1] = "12345678";
+    renderAdminList();
+    alert(`'${adminName}' 관리자의 비밀번호가 '12345678'로 초기화되었습니다.\n(반드시 우측 상단의 [💾 시트에 최종 저장] 버튼을 눌러야 반영됩니다!)`);
 }
 
 function addNewAdmin() {
     let newId = document.getElementById('newAdminId').value.trim();
-    let newPw = document.getElementById('newAdminPw').value.trim();
-    if (!newId || !newPw) { alert('아이디와 비밀번호를 모두 입력해주세요.'); return; }
+    // ★ 새 관리자 추가 시 초기 비밀번호를 12345678 로 하드코딩 고정합니다.
+    let newPw = "12345678"; 
+    
+    if (!newId) { alert('관리자 이름을 입력해주세요.'); return; }
     for (let i = 1; i < globalAdminData.length; i++) {
         if (globalAdminData[i] && globalAdminData[i][0] === newId) { alert('이미 존재하는 관리자 이름입니다.'); return; }
     }
     globalAdminData.push([newId, newPw]);
-    document.getElementById('newAdminId').value = ''; document.getElementById('newAdminPw').value = '';
+    document.getElementById('newAdminId').value = ''; 
     renderAdminList();
+    alert(`'${newId}' 관리자가 성공적으로 추가되었습니다. (초기 비밀번호: 12345678)\n(반드시 [💾 시트에 최종 저장] 버튼을 눌러야 반영됩니다!)`);
 }
 
 function deleteAdmin(index) {
@@ -158,7 +180,6 @@ async function saveAdminChanges() {
                 if (header.includes(loc)) {
                     if (tm) { 
                         if (header.includes(tm)) { colIdx = j; break; }
-                        // ★ 핵심 수정: 야간은 기본값이므로, 헤더에 '오후'가 안 적혀 있으면 일치하는 것으로 간주합니다.
                         else if (tm === '야간' && !header.includes('오후')) { colIdx = j; break; }
                     } 
                     else { colIdx = j; break; }
