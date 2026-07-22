@@ -7,7 +7,6 @@ async function checkDates() {
     showLoading(true);
     try {
         await initSupervisorData();
-        // searchDataByMonth가 정의되지 않았을 경우를 대비해 초기화
         if (typeof searchDataByMonth === 'undefined') window.searchDataByMonth = {};
         for (let m = 1; m <= 12; m++) searchDataByMonth[m] = [];
         let foundAny = false;
@@ -46,20 +45,21 @@ async function checkDates() {
                     if (j >= 2 && row[1] && row[1].length <= 3) day = row[1];
 
                     let locColor = '#555'; 
-                    if (location.includes('2층')) locColor = 'black'; else if (location.includes('3층')) locColor = '#0056b3';
+                    if (location.includes('2층')) locColor = 'black'; 
+                    else if (location.includes('3층')) locColor = '#0056b3';
                     else if (location.includes('4층')) locColor = '#198754'; 
-                    else if (location.includes('사감')) locColor = 'black'; // ★ 보라색(#8e44ad)에서 검정색(black)으로 수정 완료!
+                    else if (location.includes('사감')) locColor = 'black'; 
                     else if (location.includes('비고')) locColor = '#dc3545';
 
                     let displayText = dateStr + (day ? ' (' + day + ')' : '');
 
                     if (location.includes('사감')) {
-                        let displayLocation = `${location} (${sagamName})`; 
+                        let displayLocation = `${location} [${sagamName}]`; 
                         if (floorStr) displayText += ` <br>➡️ <span style="font-size: 13.5px; color: #2c3e50; background: #fff; padding: 2px 6px; border-radius: 4px; border: 1px solid #bdc3c7;">[ ${floorStr} ]</span> ➡️ <span style="color: ${locColor}; font-weight: bold; font-size:16px;">${displayLocation}</span>`;
                         else displayText += ` ➡️ <span style="color: ${locColor}; font-weight: bold;">${displayLocation}</span>`;
                     } else {
                         displayText += ` ➡️ <span style="color: ${locColor}; font-weight: bold;">${location}</span>`;
-                        if (sagamName) displayText += ` <span style="color: #7f8c8d; font-size: 13.5px; margin-left: 6px;">(사감: <b>${sagamName}</b>)</span>`;
+                        if (sagamName) displayText += ` <span style="color: black; font-size: 13.5px; margin-left: 6px;">[사감: <b>${sagamName}</b>]</span>`;
                     }
 
                     if (month >= 1 && month <= 12) { searchDataByMonth[month].push(displayText); foundAny = true; }
@@ -68,23 +68,31 @@ async function checkDates() {
             }
         }
 
-        document.getElementById('resultTitle').innerText = searchedName + ' 선생님 일정';
+        // 검색창이 타이틀 역할을 하므로, 하단 안내 메시지로 변경합니다.
+        document.getElementById('resultTitle').innerText = `총 ${allSchedulesCount(searchDataByMonth)}건의 일정이 검색되었습니다.`;
+        document.getElementById('resultTitle').style.color = '#3498db';
 
         if (foundAny) {
-            // ★ 달력 스와이프 기능과 연동하기 위해 검색된 모든 월의 데이터를 렌더링합니다. (화면 노출은 index.html에서 제어함)
             let allMonths = [];
             for (let m = 1; m <= 12; m++) { if (searchDataByMonth[m].length > 0) allMonths.push(m); }
             renderSearchResults(allMonths, '');
             
-            // ★ 달력의 현재 월을 감지하여 2개월치만 보여주도록 자동 동기화
             if (typeof updateMyScheduleDisplay === 'function') {
                 updateMyScheduleDisplay();
             }
         } else {
-            document.getElementById('resultsContainer').innerHTML = '<p class="error-text">검색된 감독 일정이 없습니다.</p>';
+            document.getElementById('resultTitle').innerText = '검색된 감독 일정이 없습니다.';
+            document.getElementById('resultTitle').style.color = '#e74c3c';
+            document.getElementById('resultsContainer').innerHTML = '';
         }
-        switchScreen('resultScreen');
     } catch (error) { alert('오류 발생: ' + error.message); } finally { showLoading(false); }
+}
+
+// 총 검색 건수를 계산하는 헬퍼 함수
+function allSchedulesCount(dataObj) {
+    let count = 0;
+    for (let m in dataObj) { count += dataObj[m].length; }
+    return count;
 }
 
 function filterByMonth(month) {

@@ -8,7 +8,7 @@
         body { font-family: 'Malgun Gothic', sans-serif; background-color: #f4f7f6; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         .container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 95%; max-width: 800px; text-align: center; box-sizing: border-box; }
         
-        #loginScreen, #adminLoginScreen { max-width: 380px; padding: 40px 20px; }
+        #adminLoginScreen { max-width: 380px; padding: 40px 20px; }
         #resultScreen, #adminScreen, #superAdminScreen { max-width: 1400px; width: 98%; }
         
         h1 { font-size: 22px; color: #333; margin-bottom: 25px; }
@@ -19,10 +19,6 @@
         
         button { width: 85%; background-color: #4CAF50; color: white; border: none; padding: 14px 20px; font-size: 15px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-bottom: 10px; transition: 0.2s; box-sizing: border-box;}
         button.cal-btn { background-color: #3498db; }
-        
-        .admin-link-box { width: 85%; margin: 0 auto; text-align: right; }
-        button.admin-btn { background-color: transparent; color: #7f8c8d; font-size: 13px; font-weight: normal; text-decoration: underline; width: auto; padding: 5px; margin-top: 5px; }
-        button.admin-btn:hover { color: #34495e; background-color: transparent; }
         
         button.save-btn { background-color: #e74c3c; width: auto; padding: 10px 20px; margin: 0; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
         button:hover { opacity: 0.9; }
@@ -63,7 +59,7 @@
         .add-btn { background-color: #27ae60; width: auto; padding: 12px 20px; font-size: 15px; margin: 0; }
 
         .layout-wrapper { display: flex; gap: 20px; align-items: stretch; }
-        #myScheduleArea { flex: 1; min-width: 280px; border-right: 1px solid #eee; padding-right: 20px; display: flex; flex-direction: column; }
+        #myScheduleArea { flex: 1; min-width: 290px; border-right: 1px solid #eee; padding-right: 20px; display: flex; flex-direction: column; }
         #resultsContainer { flex-grow: 1; }
         #calendarArea { flex: 3.5; min-width: 600px; }
 
@@ -91,31 +87,27 @@
 </head>
 <body>
 
-<div class="container" id="loginScreen">
-    <h1>🏫 감독 일정 확인</h1>
-    <div class="input-group">
-        <input type="text" id="teacherName" placeholder="선생님 성함을 입력하세요" style="ime-mode: active;" onkeyup="if(window.event.keyCode==13){searchAndShowBoth()}">
-        <button onclick="searchAndShowBoth()">내 일정 검색</button>
-    </div>
-    
-    <div style="display: flex; flex-direction: column; align-items: center;">
-        <button class="cal-btn" onclick="showCalendarOnly()">전체 달력 보기</button>
-    </div>
-    
-    <div class="admin-link-box">
-        <button class="admin-btn" onclick="switchScreen('adminLoginScreen')">⚙️ 관리자 모드</button>
-    </div>
-    <div id="loading">데이터를 불러오는 중입니다...</div>
-</div>
-
 <div class="container result-area" id="resultScreen">
+    <div id="loading" style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 1000;">데이터를 불러오는 중입니다...</div>
     <div class="layout-wrapper">
         
         <div id="myScheduleArea">
-            <h1 id="resultTitle" style="text-align: center; margin-top: 0; font-size: 19px; margin-bottom: 10px;"></h1>
+            <!-- ★ 이름 검색 및 관리자 버튼 통합 영역 (요청하신 박스 배치 구현) ★ -->
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 10px;">
+                <div style="display:flex; align-items:center; gap: 5px;">
+                    <div style="display:flex; align-items:center; border-bottom: 2px solid #e74c3c;">
+                        <input type="text" id="teacherName" placeholder="이름" style="border:none; outline:none; font-size:20px; font-weight:bold; width:70px; text-align:center; padding:2px; background:transparent;" onkeyup="if(window.event.keyCode==13){searchAndShowBoth()}">
+                        <button onclick="searchAndShowBoth()" style="background:none; border:none; padding:2px 5px; cursor:pointer; font-size:18px; margin:0;" title="검색">🔍</button>
+                    </div>
+                    <h1 style="margin:0; font-size:20px; color:#2c3e50;">선생님 일정</h1>
+                </div>
+                <button onclick="switchScreen('adminLoginScreen')" style="background:none; border:none; padding:5px; cursor:pointer; font-size:18px; margin:0; color:#7f8c8d;" title="관리자 로그인">⚙️</button>
+            </div>
+            
+            <p id="resultTitle" style="text-align: center; font-size: 14px; color: #7f8c8d; margin-top:0; margin-bottom: 15px;">이름을 입력하고 돋보기를 눌러주세요.</p>
             
             <div style="display:flex; gap:8px; justify-content:center; margin-bottom: 15px;">
-                <button class="back-btn" style="padding: 8px 12px; font-size: 14px; width:auto; margin:0; background-color: #95a5a6;" onclick="goBack()" title="처음으로 돌아가기">🏠</button>
+                <button class="back-btn" style="padding: 8px 12px; font-size: 14px; width:auto; margin:0; background-color: #95a5a6;" onclick="resetHome()" title="화면 초기화">🏠</button>
                 <button class="cal-btn" style="padding: 8px 12px; font-size: 13px; width:auto; margin:0; flex:1;" onclick="showStatsModal('yaja')">📊 야자 통계</button>
                 <button class="cal-btn" style="padding: 8px 12px; font-size: 13px; width:auto; margin:0; flex:1; background-color:#8e44ad;" onclick="showStatsModal('sagam')">📊 사감 통계</button>
             </div>
@@ -194,20 +186,45 @@
             <h2 id="statsModalTitle">📊 통계</h2>
             <button class="close-modal-btn" onclick="closeStatsModal()">닫기 ✖</button>
         </div>
-        <div class="modal-body" id="statsModalContent">
-        </div>
+        <div class="modal-body" id="statsModalContent"></div>
     </div>
 </div>
 
-<!-- ★ 스크립트 연결 주소 자동 업데이트 완료 (v=27) ★ -->
-<script src="js/config.js?v=27"></script>
-<script src="js/api.js?v=27"></script>
-<script src="js/ui.js?v=27"></script>
-<script src="js/search.js?v=27"></script>
-<script src="js/calendar.js?v=27"></script>
-<script src="js/admin.js?v=27"></script>
+<!-- ★ 스크립트 연결 주소 v=28 적용 ★ -->
+<script src="js/config.js?v=28"></script>
+<script src="js/api.js?v=28"></script>
+<script src="js/ui.js?v=28"></script>
+<script src="js/search.js?v=28"></script>
+<script src="js/calendar.js?v=28"></script>
+<script src="js/admin.js?v=28"></script>
 
 <script>
+    // ★ 페이지 최초 로드 시 메인 화면(달력) 바로 띄우기
+    window.onload = async function() {
+        document.getElementById('resultScreen').style.display = 'block';
+        if (typeof initCalendar === 'function') {
+            await initCalendar(false);
+        }
+    };
+
+    // 🏠 홈 버튼을 누르면 화면 초기화
+    function resetHome() {
+        document.getElementById('teacherName').value = '';
+        document.getElementById('resultsContainer').innerHTML = '';
+        document.getElementById('resultTitle').innerText = '이름을 입력하고 돋보기를 눌러주세요.';
+        currentCalYear = new Date().getFullYear();
+        currentCalMonth = new Date().getMonth() + 1;
+        initCalendar(false);
+    }
+
+    // 관리자 화면에서 뒤로가기 시 무조건 메인 화면으로 복귀하도록 기존 함수 덮어쓰기
+    window.goBack = function() {
+        switchScreen('resultScreen');
+        if (typeof initCalendar === 'function') {
+            initCalendar(false);
+        }
+    };
+
     function updateMyScheduleDisplay() {
         const sections = document.querySelectorAll('.month-section');
         if (!sections || sections.length === 0) return;
@@ -269,26 +286,13 @@
                 alert('선생님 성함을 입력하세요.');
                 return;
             }
-            
-            const scheduleArea = document.getElementById('myScheduleArea');
-            if (scheduleArea) { scheduleArea.style.display = 'flex'; }
-            
             if (typeof checkDates === 'function') {
                 let res = checkDates();
                 if (res instanceof Promise) await res;
             }
-            
+            // 검색 후 달력을 그릴 때 당월/익월 연동을 위해 호출
             if (typeof initCalendar === 'function') { await initCalendar(false); }
         } catch (e) { console.log("통합 화면 표시 중 문제 발생:", e); }
-    }
-
-    async function showCalendarOnly() {
-        try {
-            const scheduleArea = document.getElementById('myScheduleArea');
-            if (scheduleArea) { scheduleArea.style.display = 'none'; }
-            
-            if (typeof initCalendar === 'function') { await initCalendar(false); }
-        } catch (e) { console.log("달력 표시 중 문제 발생:", e); }
     }
 
     function showStatsModal(type) {
