@@ -81,9 +81,8 @@
         <input type="text" id="teacherName" placeholder="선생님 성함을 입력하세요" style="ime-mode: active;" onkeyup="if(window.event.keyCode==13){checkDates()}">
         <button onclick="checkDates()">내 일정 검색</button>
     </div>
-    <div style="display: flex; flex-direction: column; align-items: center;">
-        <button class="cal-btn" onclick="initCalendar(false)">전체 달력 보기</button>
-    </div>
+    
+    <!-- ★ 여기에 있던 '전체 달력 보기' 버튼을 아래 결과 화면으로 이동했습니다. ★ -->
     
     <div class="admin-link-box">
         <button class="admin-btn" onclick="switchScreen('adminLoginScreen')">⚙️ 관리자 모드</button>
@@ -95,7 +94,12 @@
     <h1 id="resultTitle" style="text-align: center;"></h1>
     <div class="month-filter-container" id="monthFilterContainer"></div>
     <div id="resultsContainer"></div>
-    <div style="text-align: center;"><button class="back-btn" style="width:auto; padding:10px 30px;" onclick="goBack()">돌아가기</button></div>
+    
+    <!-- ★ 개인 일정을 확인한 후 바로 전체 달력을 볼 수 있도록 나란히 배치했습니다. ★ -->
+    <div style="display: flex; justify-content: center; gap: 10px; margin-top: 20px;">
+        <button class="cal-btn" style="width:auto; padding:10px 20px; margin: 0;" onclick="initCalendar(false)">📅 전체 달력 보기</button>
+        <button class="back-btn" style="width:auto; padding:10px 20px; margin: 0;" onclick="goBack()">처음으로 돌아가기</button>
+    </div>
 </div>
 
 <div class="container" id="calendarScreen">
@@ -140,7 +144,6 @@
 </div>
 
 <div class="container" id="superAdminScreen">
-    <!-- ★ 최종 저장 버튼을 삭제하고 가운데 정렬로 변경 ★ -->
     <div style="display: flex; justify-content: center; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 10px;">
         <h1 style="color: #2980b9; margin:0;">👑 최고관리자: 계정 관리</h1>
     </div>
@@ -165,13 +168,13 @@
     <div style="text-align: center;"><button class="back-btn" style="width:auto; padding:10px 30px;" onclick="switchScreen('adminScreen')">캘린더로 돌아가기</button></div>
 </div>
 
-<!-- 스크립트 캐시 방지 버전 v=10 로 업데이트 -->
-<script src="js/config.js?v=10"></script>
-<script src="js/api.js?v=10"></script>
-<script src="js/ui.js?v=10"></script>
-<script src="js/search.js?v=10"></script>
-<script src="js/calendar.js?v=10"></script>
-<script src="js/admin.js?v=10"></script>
+<!-- 스크립트 캐시 방지 버전 v=11 로 업데이트 -->
+<script src="js/config.js?v=11"></script>
+<script src="js/api.js?v=11"></script>
+<script src="js/ui.js?v=11"></script>
+<script src="js/search.js?v=11"></script>
+<script src="js/calendar.js?v=11"></script>
+<script src="js/admin.js?v=11"></script>
 
 </body>
 </html>
