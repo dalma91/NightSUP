@@ -110,7 +110,8 @@
 <div class="container" id="adminScreen">
     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 10px;">
         <h1 style="color: #e74c3c; margin:0;">🛠️ 관리자 모드 (드래그 저장)</h1>
-        <button class="save-btn" onclick="saveAdminChanges()">💾 시트에 저장하기</button>
+        <!-- 버튼 텍스트 '저장하기'로 수정 완료 -->
+        <button class="save-btn" onclick="saveAdminChanges()">💾 저장하기</button>
     </div>
     
     <div class="calendar-header">
@@ -123,7 +124,7 @@
 </div>
 
 <script>
-    // ★★★ 아래 따옴표 안에 Step 1에서 복사한 웹앱 URL을 붙여넣으세요! ★★★
+    // 선생님 웹앱 URL
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbzFpsT0mfZD0L6lTlLajcafYNari4oP2ILK45i4LNT5CvDE-WimIHXqbi2m7qtDaP8/exec'; 
 
     const SHEET_ID = '1Y7cCXkLzGLbpy4RqYXljIy5a7RnWzYgp_J_ydatJiA4';
@@ -182,28 +183,36 @@
         } catch (error) { alert('오류 발생: ' + error.message); } finally { showLoading(false); }
     }
 
-    // --- ★ 새로운 저장 기능 (GAS 연동) ★ ---
+    // --- ★ 에러 해결 & 날짜 열 정렬 강화 ★ ---
     async function saveAdminChanges() {
-        if (GAS_URL.includes('여기에_웹앱_URL을')) {
-            alert('에러: 소스 코드에 GAS 웹앱 URL이 입력되지 않았습니다!');
-            return;
-        }
-        
-        if(!confirm('화면에 보이는 배치 상태로 구글 스프레드시트에 저장하시겠습니까?')) return;
-
+        if (!confirm('화면에 보이는 배치 상태로 구글 스프레드시트에 저장하시겠습니까?')) return;
         showLoading(true);
         try {
-            // 1. 원본 데이터 깊은 복사 후 감독 이름 칸 비우기 (비고란 제외)
             let newData = JSON.parse(JSON.stringify(globalSheetData));
-            for (let i = 1; i < newData.length; i++) {
-                for (let j = 2; j < newData[i].length; j++) {
-                    if (globalHeaders[j] && !globalHeaders[j].includes('비고')) {
-                        newData[i][j] = ''; // 기존 배정 초기화
+            const maxCols = globalHeaders.length; // 헤더의 칸 수를 고정 기준으로 삼음
+
+            // 1. 완벽한 직사각형 배열 생성 (The data has 12 but the range has 13 에러 방지)
+            for (let i = 0; i < newData.length; i++) {
+                // 남는 열 잘라내기
+                if (newData[i].length > maxCols) {
+                    newData[i] = newData[i].slice(0, maxCols);
+                }
+                // 부족한 열 빈칸으로 채우기
+                while (newData[i].length < maxCols) {
+                    newData[i].push('');
+                }
+                
+                // 1행(헤더)이 아닌 데이터 행의 이름칸 초기화
+                if (i > 0) {
+                    for (let j = 2; j < maxCols; j++) {
+                        if (globalHeaders[j] && !globalHeaders[j].includes('비고')) {
+                            newData[i][j] = ''; // 기존 배정 완전 비우기
+                        }
                     }
                 }
             }
 
-            // 2. 현재 달력 화면의 드래그 항목을 읽어 데이터 재구성
+            // 2. 화면의 드래그 항목을 읽어 정확한 열(Column)에 재배치
             const draggables = document.querySelectorAll('.draggable-name');
             draggables.forEach(el => {
                 const dropZone = el.closest('.drop-zone');
@@ -215,7 +224,7 @@
                 const tm = el.getAttribute('data-tm'); // '오후', '야간' 등
                 const rawName = el.getAttribute('data-name'); // 선생님 이름
 
-                // 데이터 내 날짜 행 찾기
+                // 행 찾기
                 let rowIdx = -1;
                 for (let i = 1; i < newData.length; i++) {
                     let dateStr = newData[i][0] ? newData[i][0].replace(/\s/g, '') : '';
@@ -224,9 +233,9 @@
                     }
                 }
 
-                // 데이터 내 층/시간대 열 찾기
+                // 열 찾기 (정확한 위치 매핑)
                 let colIdx = -1;
-                for (let j = 2; j < globalHeaders.length; j++) {
+                for (let j = 2; j < maxCols; j++) {
                     let header = globalHeaders[j] ? globalHeaders[j].replace(/\s/g, '') : '';
                     if (header.includes(loc)) {
                         if (tm) {
@@ -237,9 +246,9 @@
                     }
                 }
 
-                // 행, 열을 찾았다면 새 데이터 배열에 이름 삽입
+                // 매핑된 좌표에 이름 등록
                 if (rowIdx !== -1 && colIdx !== -1) {
-                    if (newData[rowIdx][colIdx]) newData[rowIdx][colIdx] += ', ' + rawName; // 이미 있으면 쉼표 추가
+                    if (newData[rowIdx][colIdx]) newData[rowIdx][colIdx] += ', ' + rawName; 
                     else newData[rowIdx][colIdx] = rawName;
                 }
             });
@@ -248,14 +257,14 @@
             const payload = { sheetId: SHEET_ID, sheetName: '감독표', data: newData };
             const response = await fetch(GAS_URL, {
                 method: 'POST',
-                headers: { 'Content-Type': 'text/plain' }, // CORS 방지를 위해 plain text로 전송
+                headers: { 'Content-Type': 'text/plain' }, 
                 body: JSON.stringify(payload)
             });
 
             const result = await response.json();
             if (result.status === 'success') {
-                alert('구글 스프레드시트에 성공적으로 저장되었습니다!');
-                globalSheetData = newData; // 화면의 기준 데이터 업데이트
+                alert('저장이 완료되었습니다!');
+                globalSheetData = newData; 
             } else {
                 throw new Error(result.message);
             }
@@ -440,6 +449,7 @@
                             else if (loc.includes('사감')) { baseLoc = '사감'; timeMark = loc.replace('사감', '').replace(/[\(\)]/g, '').trim(); }
                             
                             if (timeMark && !dayTimeMarks.includes(timeMark)) dayTimeMarks.push(timeMark);
+                            // ★ 감독이 있는 층만 groups에 추가되므로, 감독이 없는 층은 자연스럽게 건너뛰어집니다.
                             if (!groups[baseLoc]) groups[baseLoc] = [];
                             groups[baseLoc].push({ name: row[j].trim(), timeMark: timeMark });
                         }
@@ -449,6 +459,8 @@
                 let showTimeHeaders = Object.values(groups).some(g => g.length >= 2);
                 let topHeaderHtml = `<div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom: 5px; min-height: 16px;">`;
                 topHeaderHtml += `<div style="color: #e74c3c; font-size: 12px; font-weight: bold; padding-right: 4px;">${bigoList.join(', ')}</div>`;
+                
+                // 해당 날짜의 시간대 헤더 표시 (오후, 야간 등 열 맞춤)
                 if (showTimeHeaders) {
                     topHeaderHtml += `<div style="display:flex; gap:5px; justify-content:flex-end;">`;
                     dayTimeMarks.forEach(tm => { topHeaderHtml += `<div style="width:55px; text-align:center; font-size:11.5px; color:#555; font-weight:bold;">${tm}</div>`; });
@@ -469,7 +481,6 @@
 
                     result += `<div class="cal-item" style="color: ${textColor}; background-color: ${bgColor}; border-left-color: ${borderColor};">`;
                     
-                    // 위치와 날짜 정보가 포함된 Drop Zone (저장 기능에 쓰임)
                     let namesHtml = `<div class="drop-zone" data-loc="${baseLoc}" data-month="${month}" data-day="${day}" style="justify-content:flex-end; width:100%;">`;
 
                     if (showTimeHeaders) {
@@ -481,9 +492,9 @@
                             
                             if(isAdmin && displayStr) {
                                 let itemId = `drag-${month}-${day}-${baseLoc}-${tm}-${rawName}`;
-                                // data-name 에는 '사감' 글자가 제외된 원래 이름 저장
                                 namesHtml += `<div style="width:55px; text-align:center;"><span class="draggable-name" draggable="true" id="${itemId}" data-tm="${tm}" data-name="${rawName}">${displayStr}</span></div>`;
                             } else {
+                                // 빈 시간대라도 55px 빈 공간을 출력하여 열(Column)이 완벽히 정렬되도록 유지
                                 namesHtml += `<div style="width:55px; text-align:center; font-weight:bold; font-size:12.5px;">${displayStr}</div>`;
                             }
                         });
