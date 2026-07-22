@@ -61,7 +61,7 @@ function renderAdminList() {
     }
 }
 
-// ★ 계정 목록을 구글 시트에 조용히(백그라운드에서) 자동 저장하는 내부 함수입니다.
+// 자동 저장 내부 함수
 async function autoSaveAdminsToSheet() {
     showLoading(true);
     try {
@@ -79,24 +79,23 @@ async function autoSaveAdminsToSheet() {
     }
 }
 
-// ★ 자동 저장 로직 적용
 async function resetAdminPassword(index) {
     let adminName = globalAdminData[index][0];
     if (!confirm(`'${adminName}' 관리자의 비밀번호를 '12345678'로 초기화하시겠습니까?`)) return;
     
-    let oldPw = globalAdminData[index][1]; // 실패 시 복구를 위한 백업
+    let oldPw = globalAdminData[index][1]; 
     globalAdminData[index][1] = "12345678";
     
     let isSuccess = await autoSaveAdminsToSheet();
     if (isSuccess) {
         renderAdminList();
-        alert(`'${adminName}' 관리자의 비밀번호가 '12345678'로 초기화 및 저장되었습니다.`);
+        // ★ 불필요한 저장 안내 문구 삭제, 간결하게 성공 여부만 알림
+        alert(`'${adminName}' 관리자의 비밀번호가 '12345678'로 초기화되었습니다.`);
     } else {
-        globalAdminData[index][1] = oldPw; // 롤백
+        globalAdminData[index][1] = oldPw; 
     }
 }
 
-// ★ 자동 저장 로직 적용
 async function addNewAdmin() {
     let newId = document.getElementById('newAdminId').value.trim();
     let newPw = "12345678"; 
@@ -112,25 +111,25 @@ async function addNewAdmin() {
     if (isSuccess) {
         document.getElementById('newAdminId').value = ''; 
         renderAdminList();
-        alert(`'${newId}' 관리자가 성공적으로 추가 및 저장되었습니다.\n(초기 비밀번호: 12345678)`);
+        // ★ 불필요한 저장 안내 문구 삭제
+        alert(`'${newId}' 관리자가 추가되었습니다. (초기 비밀번호: 12345678)`);
     } else {
-        globalAdminData.pop(); // 롤백
+        globalAdminData.pop(); 
     }
 }
 
-// ★ 자동 저장 로직 적용
 async function deleteAdmin(index) {
     let adminName = globalAdminData[index][0];
     if (!confirm(`'${adminName}' 관리자를 정말 삭제하시겠습니까?`)) return;
     
-    let deletedItem = globalAdminData.splice(index, 1)[0]; // 배열에서 빼내고 백업
+    let deletedItem = globalAdminData.splice(index, 1)[0]; 
     
     let isSuccess = await autoSaveAdminsToSheet();
     if (isSuccess) {
         renderAdminList();
-        alert(`'${adminName}' 관리자가 완전히 삭제되었습니다.`);
+        alert(`'${adminName}' 관리자가 삭제되었습니다.`);
     } else {
-        globalAdminData.splice(index, 0, deletedItem); // 롤백
+        globalAdminData.splice(index, 0, deletedItem); 
     }
 }
 
