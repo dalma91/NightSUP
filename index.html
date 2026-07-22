@@ -5,7 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>야간자율학습 감독일자 확인</title>
     <style>
-        body { font-family: 'Malgun Gothic', sans-serif; background-color: #f4f7f6; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        /* ★ body 속성 수정: align-items를 flex-start로 변경하여 상단 좌표(Y)를 고정시켰습니다. */
+        body { 
+            font-family: 'Malgun Gothic', sans-serif; 
+            background-color: #f4f7f6; 
+            margin: 0; 
+            display: flex; 
+            justify-content: center; 
+            align-items: flex-start; 
+            padding: 40px 0; 
+            min-height: 100vh; 
+            box-sizing: border-box;
+        }
         .container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 95%; max-width: 800px; text-align: center; box-sizing: border-box; }
         
         #adminLoginScreen { max-width: 380px; padding: 40px 20px; }
@@ -91,15 +102,12 @@
     <div class="layout-wrapper">
         
         <div id="myScheduleArea">
-            <!-- ★ 붉은 밑줄 제거 및 정렬 교정 구역 ★ -->
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 10px;">
                 <div style="display:flex; align-items:center; gap: 8px;">
-                    <!-- 붉은색 border-bottom 삭제, 배경을 둥근 연한 회색으로 감싸 깔끔하게 정렬 -->
                     <div style="display:flex; align-items:center; background-color: #f1f3f5; border-radius: 8px; padding: 4px 8px;">
                         <input type="text" id="teacherName" placeholder="이름" style="border:none; outline:none; font-size:18px; font-weight:bold; width:60px; text-align:center; background:transparent; padding:0; margin:0; line-height: 1;" onkeyup="if(window.event.keyCode==13){searchAndShowBoth()}">
                         <button onclick="searchAndShowBoth()" style="background:none; border:none; padding:0 0 0 4px; cursor:pointer; font-size:16px; margin:0; display:flex; align-items:center;" title="검색">🔍</button>
                     </div>
-                    <!-- 선생님 글자와 검색창의 상하 중앙선 완벽 일치 -->
                     <h1 style="margin:0; font-size:19px; color:#2c3e50; white-space: nowrap; line-height: 1;">선생님</h1>
                 </div>
                 <button onclick="switchScreen('adminLoginScreen')" style="background:none; border:none; padding:5px; cursor:pointer; font-size:18px; margin:0; color:#7f8c8d;" title="관리자 로그인">⚙️</button>
@@ -191,13 +199,13 @@
     </div>
 </div>
 
-<!-- ★ 스크립트 연결 주소 v=31 적용 ★ -->
-<script src="js/config.js?v=31"></script>
-<script src="js/api.js?v=31"></script>
-<script src="js/ui.js?v=31"></script>
-<script src="js/search.js?v=31"></script>
-<script src="js/calendar.js?v=31"></script>
-<script src="js/admin.js?v=31"></script>
+<!-- ★ 스크립트 연결 주소 v=32 (캐시 방지용) ★ -->
+<script src="js/config.js?v=32"></script>
+<script src="js/api.js?v=32"></script>
+<script src="js/ui.js?v=32"></script>
+<script src="js/search.js?v=32"></script>
+<script src="js/calendar.js?v=32"></script>
+<script src="js/admin.js?v=32"></script>
 
 <script>
     window.onload = async function() {
