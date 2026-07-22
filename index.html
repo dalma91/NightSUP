@@ -9,7 +9,6 @@
         .container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 95%; max-width: 800px; text-align: center; box-sizing: border-box; }
         
         #loginScreen, #adminLoginScreen { max-width: 380px; padding: 40px 20px; }
-        
         #resultScreen, #adminScreen, #superAdminScreen { max-width: 1400px; width: 98%; }
         
         h1 { font-size: 22px; color: #333; margin-bottom: 25px; }
@@ -50,9 +49,7 @@
         .calendar-table th:last-child, .calendar-table td:last-child { color: blue; } 
         
         .cal-date { font-weight: bold; margin-bottom: 2px; text-align: left; font-size: 13px; }
-        
         .cal-item { border-radius: 3px; margin-bottom: 1px; border-left: 3px solid #ccc; display: flex; align-items: center; padding: 1px; min-height: 18px; }
-        
         .draggable-name { cursor: grab; background-color: rgba(255,255,255,0.8); border: 1px dashed #aaa; padding: 1px 2px; border-radius: 3px; display: inline-block; margin: 1px; transition: 0.2s; font-weight:bold; font-size:11px; z-index: 10;}
         .draggable-name:active { cursor: grabbing; opacity: 0.5; }
         
@@ -66,8 +63,7 @@
         .add-btn { background-color: #27ae60; width: auto; padding: 12px 20px; font-size: 15px; margin: 0; }
 
         .layout-wrapper { display: flex; gap: 20px; align-items: stretch; }
-        
-        #myScheduleArea { flex: 1; min-width: 250px; border-right: 1px solid #eee; padding-right: 20px; display: flex; flex-direction: column; }
+        #myScheduleArea { flex: 1; min-width: 280px; border-right: 1px solid #eee; padding-right: 20px; display: flex; flex-direction: column; }
         #resultsContainer { flex-grow: 1; }
         #calendarArea { flex: 3.5; min-width: 600px; }
 
@@ -77,6 +73,20 @@
             #calendarArea { width: 100%; min-width: auto; }
             .calendar-table th, .calendar-table td { padding: 1px; height: 50px; }
         }
+
+        /* ★ 통계 팝업(모달) 스타일 ★ */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; padding: 20px; border-radius: 10px; width: 95%; max-width: 700px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .modal-header h2 { margin: 0; font-size: 20px; color: #2c3e50; }
+        .modal-body { overflow-y: auto; }
+        .close-modal-btn { background: #e74c3c; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; width: auto; margin:0;}
+        .close-modal-btn:hover { background: #c0392b; }
+        
+        .stats-table { width: 100%; border-collapse: collapse; text-align: center; font-size: 14px; }
+        .stats-table th, .stats-table td { border: 1px solid #ddd; padding: 8px; }
+        .stats-table th { background-color: #34495e; color: white; }
+        .stats-total-col { font-weight: bold; color: #d35400; background-color: #fcf3cf; }
     </style>
 </head>
 <body>
@@ -102,7 +112,14 @@
     <div class="layout-wrapper">
         
         <div id="myScheduleArea">
-            <h1 id="resultTitle" style="text-align: center; margin-top: 0; font-size: 19px;"></h1>
+            <h1 id="resultTitle" style="text-align: center; margin-top: 0; font-size: 19px; margin-bottom: 10px;"></h1>
+            
+            <!-- ★ 왼쪽 상단에 통계 보기 버튼 배치 ★ -->
+            <div style="display:flex; gap:10px; justify-content:center; margin-bottom: 15px;">
+                <button class="cal-btn" style="padding: 8px 12px; font-size: 13px; width:auto; margin:0; flex:1;" onclick="showStatsModal('yaja')">📊 야자 통계</button>
+                <button class="cal-btn" style="padding: 8px 12px; font-size: 13px; width:auto; margin:0; flex:1; background-color:#8e44ad;" onclick="showStatsModal('sagam')">📊 사감 통계</button>
+            </div>
+
             <div id="resultsContainer"></div>
             <div class="month-filter-container" id="monthFilterContainer"></div>
         </div>
@@ -145,7 +162,6 @@
             <button class="save-btn" onclick="saveAdminChanges()">💾 저장하기</button>
         </div>
     </div>
-    
     <div class="calendar-header">
         <button class="cal-nav-btn" onclick="changeMonth(-1, true)">◀ 이전</button>
         <span id="adminCalendarTitle" style="font-size:20px; font-weight:bold;"></span>
@@ -159,7 +175,6 @@
     <div style="display: flex; justify-content: center; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 10px;">
         <h1 style="color: #2980b9; margin:0;">👑 최고관리자: 계정 관리</h1>
     </div>
-    
     <table class="admin-table">
         <thead>
             <tr>
@@ -170,37 +185,47 @@
         </thead>
         <tbody id="adminListBody"></tbody>
     </table>
-
     <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 5px;">
         <input type="text" id="newAdminId" placeholder="새 관리자 이름" style="width: 50%; margin-bottom: 0;" style="ime-mode: active;">
         <button class="add-btn" onclick="addNewAdmin()">➕ 추가하기</button>
     </div>
     <p style="text-align: center; font-size: 13px; color: #7f8c8d; margin-top: 0; margin-bottom: 20px;">* 계정을 <b>추가, 삭제, 초기화</b> 하면 구글 시트에 <b>자동으로 저장</b>됩니다.</p>
-
     <div style="text-align: center;"><button class="back-btn" style="width:auto; padding:10px 30px;" onclick="switchScreen('adminScreen')">캘린더로 돌아가기</button></div>
 </div>
 
-<!-- ★ 스크립트 캐시 방지 버전 v=21 로 업데이트 완료 ★ -->
-<script src="js/config.js?v=21"></script>
-<script src="js/api.js?v=21"></script>
-<script src="js/ui.js?v=21"></script>
-<script src="js/search.js?v=21"></script>
-<script src="js/calendar.js?v=21"></script>
-<script src="js/admin.js?v=21"></script>
+<!-- ★ 통계 팝업 HTML 영역 추가 ★ -->
+<div class="modal-overlay" id="statsModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="statsModalTitle">📊 통계</h2>
+            <button class="close-modal-btn" onclick="closeStatsModal()">닫기 ✖</button>
+        </div>
+        <div class="modal-body" id="statsModalContent">
+            <!-- 통계 표가 여기에 자바스크립트로 그려집니다 -->
+        </div>
+    </div>
+</div>
+
+<!-- 스크립트 불러오기 (캐시 방지 v=22) -->
+<script src="js/config.js?v=22"></script>
+<script src="js/api.js?v=22"></script>
+<script src="js/ui.js?v=22"></script>
+<script src="js/search.js?v=22"></script>
+<script src="js/calendar.js?v=22"></script>
+<script src="js/admin.js?v=22"></script>
 
 <script>
+    // ----------------------------------------------------
+    // [기존] 2개월(또는 2월 단독) 동기화 필터링 로직
+    // ----------------------------------------------------
     function updateMyScheduleDisplay() {
         const sections = document.querySelectorAll('.month-section');
         if (!sections || sections.length === 0) return;
 
-        // 캘린더에 표시된 당월 계산
         const currentMonth = currentCalMonth;
         let nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
         
-        // ★ 핵심 수정: 2월인 경우 학년도가 종료되므로 다음 달(3월)을 표시하지 않음
-        if (currentMonth === 2) {
-            nextMonth = -1; 
-        }
+        if (currentMonth === 2) { nextMonth = -1; }
         
         let visibleCount = 0;
 
@@ -212,7 +237,6 @@
                 
                 if (match) {
                     const secMonth = parseInt(match[1], 10);
-                    // 당월이거나 익월일 때만 표시 (2월일 때는 당월만 매칭됨)
                     if (secMonth === currentMonth || secMonth === nextMonth) {
                         sec.style.display = 'block';
                         visibleCount++;
@@ -237,8 +261,6 @@
                 emptyMsg.style.marginTop = '20px';
                 resultsContainer.appendChild(emptyMsg);
             }
-            
-            // ★ 메시지 분기 처리: 2월일 때는 단독 메시지로 깔끔하게 표시
             if (currentMonth === 2) {
                 emptyMsg.innerText = `선택하신 2월에는 배정된 일정이 없습니다.`;
             } else {
@@ -259,36 +281,128 @@
             }
             
             const scheduleArea = document.getElementById('myScheduleArea');
-            if (scheduleArea) {
-                scheduleArea.style.display = 'flex'; 
-            }
+            if (scheduleArea) { scheduleArea.style.display = 'flex'; }
             
             if (typeof checkDates === 'function') {
                 let res = checkDates();
                 if (res instanceof Promise) await res;
             }
             
-            if (typeof initCalendar === 'function') {
-                await initCalendar(false);
-            }
-        } catch (e) {
-            console.log("통합 화면 표시 중 문제 발생(무시됨):", e);
-        }
+            if (typeof initCalendar === 'function') { await initCalendar(false); }
+        } catch (e) { console.log("통합 화면 표시 중 문제 발생:", e); }
     }
 
     async function showCalendarOnly() {
         try {
             const scheduleArea = document.getElementById('myScheduleArea');
-            if (scheduleArea) {
-                scheduleArea.style.display = 'none';
-            }
+            if (scheduleArea) { scheduleArea.style.display = 'none'; }
             
-            if (typeof initCalendar === 'function') {
-                await initCalendar(false);
-            }
-        } catch (e) {
-            console.log("달력 표시 중 문제 발생(무시됨):", e);
+            if (typeof initCalendar === 'function') { await initCalendar(false); }
+        } catch (e) { console.log("달력 표시 중 문제 발생:", e); }
+    }
+
+    // ----------------------------------------------------
+    // ★ [신규] 통계 계산 및 팝업 표시 로직
+    // ----------------------------------------------------
+    function showStatsModal(type) {
+        if (!globalSheetData || globalSheetData.length === 0) {
+            alert('데이터를 먼저 불러와야 합니다.');
+            return;
         }
+
+        let stats = {};
+        // 현재 캘린더에 표시된 연도를 기준으로 요일을 계산합니다.
+        let currentYear = typeof currentCalYear !== 'undefined' ? currentCalYear : new Date().getFullYear();
+
+        // 시트 데이터를 순회하며 요일별 카운트 계산
+        for (let i = 1; i < globalSheetData.length; i++) {
+            const row = globalSheetData[i];
+            if (!row || !row[0]) continue;
+            
+            let dateStr = row[0].replace(/\s/g, '');
+            let month = -1, day = -1;
+            let match = dateStr.match(/(\d+)[/\.월]+(\d+)/);
+            if (match) {
+                month = parseInt(match[1], 10);
+                day = parseInt(match[2], 10);
+            }
+            if (month === -1 || day === -1) continue;
+
+            // 자바스크립트 요일 추출: 0(일) ~ 6(토)
+            let dateObj = new Date(currentYear, month - 1, day);
+            let dayOfWeek = dateObj.getDay(); 
+
+            for (let j = 2; j < row.length; j++) {
+                if (!row[j] || row[j].trim() === '') continue;
+                let header = globalHeaders[j] ? globalHeaders[j].trim() : '';
+                if (header.includes('비고')) continue; // 비고란 제외
+
+                let isSagam = header.includes('사감');
+                let isYaja = !isSagam; 
+
+                // 요청한 통계 타입(야자 or 사감)에 맞는 데이터만 필터링
+                if (type === 'sagam' && !isSagam) continue;
+                if (type === 'yaja' && !isYaja) continue;
+
+                let names = row[j].split(',');
+                names.forEach(name => {
+                    name = name.trim();
+                    if (!name) return;
+                    
+                    if (!stats[name]) {
+                        // [일, 월, 화, 수, 목, 금, 토]
+                        stats[name] = [0, 0, 0, 0, 0, 0, 0]; 
+                    }
+                    stats[name][dayOfWeek]++;
+                });
+            }
+        }
+
+        // 팝업 HTML 테이블 생성
+        let title = type === 'yaja' ? '📊 야자감독 횟수 통계' : '📊 사감 횟수 통계';
+        let html = `<table class="stats-table">
+            <thead>
+                <tr>
+                    <th>선생님</th>
+                    <th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th><th>일</th>
+                    <th class="stats-total-col">합계</th>
+                </tr>
+            </thead>
+            <tbody>`;
+            
+        // 이름 가나다 순으로 정렬
+        let sortedNames = Object.keys(stats).sort();
+        
+        if(sortedNames.length === 0) {
+            html += `<tr><td colspan="9" style="padding:20px; color:#7f8c8d;">해당 통계 데이터가 없습니다.</td></tr>`;
+        } else {
+            sortedNames.forEach(name => {
+                let counts = stats[name];
+                let total = counts.reduce((a, b) => a + b, 0);
+                
+                // 보기 좋게 0번(일요일)을 맨 뒤로 보냅니다.
+                html += `<tr>
+                    <td style="font-weight:bold;">${name}</td>
+                    <td>${counts[1] || '-'}</td> <!-- 월 -->
+                    <td>${counts[2] || '-'}</td> <!-- 화 -->
+                    <td>${counts[3] || '-'}</td> <!-- 수 -->
+                    <td>${counts[4] || '-'}</td> <!-- 목 -->
+                    <td>${counts[5] || '-'}</td> <!-- 금 -->
+                    <td>${counts[6] || '-'}</td> <!-- 토 -->
+                    <td style="color:#e74c3c;">${counts[0] || '-'}</td> <!-- 일 -->
+                    <td class="stats-total-col">${total}</td>
+                </tr>`;
+            });
+        }
+        html += `</tbody></table>`;
+        
+        document.getElementById('statsModalTitle').innerText = title;
+        document.getElementById('statsModalContent').innerHTML = html;
+        document.getElementById('statsModal').style.display = 'flex';
+    }
+
+    function closeStatsModal() {
+        document.getElementById('statsModal').style.display = 'none';
     }
 </script>
 </body>
