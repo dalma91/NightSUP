@@ -174,6 +174,7 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
             }
             break; 
         }
+        
     }
     
     return `<div class="cal-date" style="display: flex; align-items: center; margin-bottom: 4px;"><span style="font-size: 15px;">${day}</span>${bigoStr}</div>` + result;
