@@ -110,7 +110,9 @@ async function saveAdminChanges() {
     if (!confirm(`현재 화면에 보이는 ${currentCalMonth}월의 배치 상태를 구글 시트에 저장하시겠습니까?\n(다른 달의 데이터는 그대로 안전하게 유지됩니다.)`)) return;
     showLoading(true);
     try {
-        let newData = JSON.parse(JSON.stringify(globalSheetData));
+        // ★ 핵심 수정: 구글 시트의 "최신" 데이터를 실시간으로 다시 불러와 비고란이 삭제되는 것을 완벽 차단합니다.
+        const freshSheetData = await fetchSpecificSheet('감독표');
+        let newData = JSON.parse(JSON.stringify(freshSheetData));
         const maxCols = globalHeaders.length; 
 
         for (let i = 0; i < newData.length; i++) {
@@ -124,6 +126,7 @@ async function saveAdminChanges() {
 
                 if (rowMonth === currentCalMonth) {
                     for (let j = 2; j < maxCols; j++) {
+                        // '비고' 열은 절대로 비우지 않도록 보호합니다.
                         if (globalHeaders[j] && !globalHeaders[j].includes('비고')) {
                             newData[i][j] = ''; 
                         }
@@ -172,40 +175,8 @@ async function saveAdminChanges() {
         
         if (result.status === 'success') {
             alert(`${currentCalMonth}월 데이터 저장이 완료되었습니다!`);
-            globalSheetData = newData; 
+            globalSheetData = newData; // 저장 후 웹페이지 메모리도 최신 상태로 갱신
         } else throw new Error(result.message);
 
     } catch (error) { alert('저장 중 오류가 발생했습니다: ' + error.message); } finally { showLoading(false); }
-}
-
-function setupDragAndDrop() {
-    const draggables = document.querySelectorAll('.draggable-name');
-    const dropZones = document.querySelectorAll('.drop-zone');
-
-    draggables.forEach(draggable => {
-        draggable.addEventListener('dragstart', (e) => {
-            e.dataTransfer.setData('text/plain', draggable.id);
-            setTimeout(() => draggable.style.display = 'none', 0);
-        });
-        draggable.addEventListener('dragend', () => { draggable.style.display = 'inline-block'; });
-    });
-
-    dropZones.forEach(zone => {
-        zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('over'); });
-        zone.addEventListener('dragleave', () => { zone.classList.remove('over'); });
-        zone.addEventListener('drop', (e) => {
-            e.preventDefault(); zone.classList.remove('over');
-            const id = e.dataTransfer.getData('text/plain');
-            const draggableElement = document.getElementById(id);
-            
-            if (draggableElement) {
-                if(e.target.tagName === 'DIV' && e.target.parentElement.classList.contains('drop-zone')) {
-                     e.target.innerHTML = ''; 
-                     e.target.appendChild(draggableElement);
-                } else if (e.target.classList.contains('drop-zone')) {
-                    zone.appendChild(draggableElement);
-                }
-            }
-        });
-    });
 }
