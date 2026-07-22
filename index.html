@@ -140,9 +140,9 @@
 </div>
 
 <div class="container" id="superAdminScreen">
-    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 10px;">
+    <!-- ★ 최종 저장 버튼을 삭제하고 가운데 정렬로 변경 ★ -->
+    <div style="display: flex; justify-content: center; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 10px;">
         <h1 style="color: #2980b9; margin:0;">👑 최고관리자: 계정 관리</h1>
-        <button class="save-btn" onclick="saveSuperAdminChanges()">💾 시트에 최종 저장</button>
     </div>
     
     <table class="admin-table">
@@ -158,21 +158,20 @@
 
     <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 5px;">
         <input type="text" id="newAdminId" placeholder="새 관리자 이름" style="width: 50%; margin-bottom: 0;" style="ime-mode: active;">
-        <!-- ★ 초기 비밀번호는 12345678로 자동 세팅되므로 입력칸을 삭제했습니다 ★ -->
         <button class="add-btn" onclick="addNewAdmin()">➕ 추가하기</button>
     </div>
-    <p style="text-align: center; font-size: 13px; color: #7f8c8d; margin-top: 0; margin-bottom: 20px;">* 새 관리자 추가 시 초기 비밀번호는 <b>12345678</b> 로 자동 설정됩니다.</p>
+    <p style="text-align: center; font-size: 13px; color: #7f8c8d; margin-top: 0; margin-bottom: 20px;">* 계정을 <b>추가, 삭제, 초기화</b> 하면 구글 시트에 <b>자동으로 저장</b>됩니다.</p>
 
     <div style="text-align: center;"><button class="back-btn" style="width:auto; padding:10px 30px;" onclick="switchScreen('adminScreen')">캘린더로 돌아가기</button></div>
 </div>
 
-<!-- 스크립트 캐시 방지 버전 v=9 로 업데이트 -->
-<script src="js/config.js?v=9"></script>
-<script src="js/api.js?v=9"></script>
-<script src="js/ui.js?v=9"></script>
-<script src="js/search.js?v=9"></script>
-<script src="js/calendar.js?v=9"></script>
-<script src="js/admin.js?v=9"></script>
+<!-- 스크립트 캐시 방지 버전 v=10 로 업데이트 -->
+<script src="js/config.js?v=10"></script>
+<script src="js/api.js?v=10"></script>
+<script src="js/ui.js?v=10"></script>
+<script src="js/search.js?v=10"></script>
+<script src="js/calendar.js?v=10"></script>
+<script src="js/admin.js?v=10"></script>
 
 </body>
 </html>
