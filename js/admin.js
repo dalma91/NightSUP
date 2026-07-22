@@ -50,10 +50,8 @@ function renderAdminList() {
         let id = row[0] || ''; 
         let isSuper = (i === 1);
         
-        // ★ 화면에 비밀번호가 노출되지 않도록 마스킹(********) 처리합니다.
         let pwDisplay = '********'; 
         
-        // ★ 최고관리자는 본인 권한 수정 불가, 일반 관리자는 [비번초기화]와 [삭제] 버튼 제공
         let btnHtml = isSuper ? 
             `<span style="color:#7f8c8d; font-weight:bold;">관리 불가 (최고관리자)</span>` : 
             `<button class="save-btn" style="background-color: #f39c12; width: auto; padding: 6px 12px; font-size: 13px; margin: 0 5px 0 0;" onclick="resetAdminPassword(${i})">🔄 비번초기화</button>` +
@@ -63,7 +61,6 @@ function renderAdminList() {
     }
 }
 
-// ★ 비밀번호 초기화 (12345678) 함수 추가
 function resetAdminPassword(index) {
     let adminName = globalAdminData[index][0];
     if (!confirm(`'${adminName}' 관리자의 비밀번호를 '12345678'로 초기화하시겠습니까?`)) return;
@@ -75,7 +72,6 @@ function resetAdminPassword(index) {
 
 function addNewAdmin() {
     let newId = document.getElementById('newAdminId').value.trim();
-    // ★ 새 관리자 추가 시 초기 비밀번호를 12345678 로 하드코딩 고정합니다.
     let newPw = "12345678"; 
     
     if (!newId) { alert('관리자 이름을 입력해주세요.'); return; }
@@ -99,7 +95,8 @@ async function saveSuperAdminChanges() {
     showLoading(true);
     try {
         let submitData = globalAdminData.map(row => [row[0] || '', row[1] || '']);
-        const payload = { action: 'saveAdmins', sheetId: SHEET_ID, data: submitData };
+        // ★ 핵심 추가: 서버가 길을 잃지 않도록 sheetName: '관리자' 를 명시합니다.
+        const payload = { action: 'saveAdmins', sheetId: SHEET_ID, sheetName: '관리자', data: submitData };
         const response = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) });
         const result = await response.json();
         if (result.status === 'success') alert('관리자 계정 목록이 성공적으로 저장되었습니다!');
@@ -116,7 +113,8 @@ async function changeAdminPassword() {
 
     showLoading(true);
     try {
-        const payload = { action: 'changePassword', sheetId: SHEET_ID, adminId: currentLoggedInAdmin, newPassword: newPw };
+        // ★ 핵심 추가: 서버가 길을 잃지 않도록 sheetName: '관리자' 를 명시합니다.
+        const payload = { action: 'changePassword', sheetId: SHEET_ID, sheetName: '관리자', adminId: currentLoggedInAdmin, newPassword: newPw };
         const response = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) });
         const result = await response.json();
         if (result.status === 'success') {
@@ -192,6 +190,7 @@ async function saveAdminChanges() {
             }
         });
 
+        // 감독표 저장 시에는 이미 sheetName: '감독표' 가 명시되어 있어 에러가 나지 않았던 것입니다.
         const payload = { action: 'saveSchedule', sheetId: SHEET_ID, sheetName: '감독표', data: newData };
         const response = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) });
         const result = await response.json();
