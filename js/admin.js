@@ -61,16 +61,43 @@ function renderAdminList() {
     }
 }
 
-function resetAdminPassword(index) {
+// ★ 계정 목록을 구글 시트에 조용히(백그라운드에서) 자동 저장하는 내부 함수입니다.
+async function autoSaveAdminsToSheet() {
+    showLoading(true);
+    try {
+        let submitData = globalAdminData.map(row => [row[0] || '', row[1] || '']);
+        const payload = { action: 'saveAdmins', sheetId: SHEET_ID, sheetName: '관리자', data: submitData };
+        const response = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) });
+        const result = await response.json();
+        if (result.status !== 'success') throw new Error(result.message);
+        return true;
+    } catch (error) { 
+        alert('시트 자동 저장 중 오류가 발생했습니다: ' + error.message); 
+        return false;
+    } finally { 
+        showLoading(false); 
+    }
+}
+
+// ★ 자동 저장 로직 적용
+async function resetAdminPassword(index) {
     let adminName = globalAdminData[index][0];
     if (!confirm(`'${adminName}' 관리자의 비밀번호를 '12345678'로 초기화하시겠습니까?`)) return;
     
+    let oldPw = globalAdminData[index][1]; // 실패 시 복구를 위한 백업
     globalAdminData[index][1] = "12345678";
-    renderAdminList();
-    alert(`'${adminName}' 관리자의 비밀번호가 '12345678'로 초기화되었습니다.\n(반드시 우측 상단의 [💾 시트에 최종 저장] 버튼을 눌러야 반영됩니다!)`);
+    
+    let isSuccess = await autoSaveAdminsToSheet();
+    if (isSuccess) {
+        renderAdminList();
+        alert(`'${adminName}' 관리자의 비밀번호가 '12345678'로 초기화 및 저장되었습니다.`);
+    } else {
+        globalAdminData[index][1] = oldPw; // 롤백
+    }
 }
 
-function addNewAdmin() {
+// ★ 자동 저장 로직 적용
+async function addNewAdmin() {
     let newId = document.getElementById('newAdminId').value.trim();
     let newPw = "12345678"; 
     
@@ -78,30 +105,33 @@ function addNewAdmin() {
     for (let i = 1; i < globalAdminData.length; i++) {
         if (globalAdminData[i] && globalAdminData[i][0] === newId) { alert('이미 존재하는 관리자 이름입니다.'); return; }
     }
+    
     globalAdminData.push([newId, newPw]);
-    document.getElementById('newAdminId').value = ''; 
-    renderAdminList();
-    alert(`'${newId}' 관리자가 성공적으로 추가되었습니다. (초기 비밀번호: 12345678)\n(반드시 [💾 시트에 최종 저장] 버튼을 눌러야 반영됩니다!)`);
+    
+    let isSuccess = await autoSaveAdminsToSheet();
+    if (isSuccess) {
+        document.getElementById('newAdminId').value = ''; 
+        renderAdminList();
+        alert(`'${newId}' 관리자가 성공적으로 추가 및 저장되었습니다.\n(초기 비밀번호: 12345678)`);
+    } else {
+        globalAdminData.pop(); // 롤백
+    }
 }
 
-function deleteAdmin(index) {
-    if (!confirm(`'${globalAdminData[index][0]}' 관리자를 정말 삭제하시겠습니까?`)) return;
-    globalAdminData.splice(index, 1);
-    renderAdminList();
-}
-
-async function saveSuperAdminChanges() {
-    if (!confirm('현재 화면에 보이는 관리자 목록으로 구글 시트를 업데이트하시겠습니까?')) return;
-    showLoading(true);
-    try {
-        let submitData = globalAdminData.map(row => [row[0] || '', row[1] || '']);
-        // ★ 핵심 추가: 서버가 길을 잃지 않도록 sheetName: '관리자' 를 명시합니다.
-        const payload = { action: 'saveAdmins', sheetId: SHEET_ID, sheetName: '관리자', data: submitData };
-        const response = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) });
-        const result = await response.json();
-        if (result.status === 'success') alert('관리자 계정 목록이 성공적으로 저장되었습니다!');
-        else throw new Error(result.message);
-    } catch (error) { alert('저장 중 오류가 발생했습니다: ' + error.message); } finally { showLoading(false); }
+// ★ 자동 저장 로직 적용
+async function deleteAdmin(index) {
+    let adminName = globalAdminData[index][0];
+    if (!confirm(`'${adminName}' 관리자를 정말 삭제하시겠습니까?`)) return;
+    
+    let deletedItem = globalAdminData.splice(index, 1)[0]; // 배열에서 빼내고 백업
+    
+    let isSuccess = await autoSaveAdminsToSheet();
+    if (isSuccess) {
+        renderAdminList();
+        alert(`'${adminName}' 관리자가 완전히 삭제되었습니다.`);
+    } else {
+        globalAdminData.splice(index, 0, deletedItem); // 롤백
+    }
 }
 
 async function changeAdminPassword() {
@@ -113,7 +143,6 @@ async function changeAdminPassword() {
 
     showLoading(true);
     try {
-        // ★ 핵심 추가: 서버가 길을 잃지 않도록 sheetName: '관리자' 를 명시합니다.
         const payload = { action: 'changePassword', sheetId: SHEET_ID, sheetName: '관리자', adminId: currentLoggedInAdmin, newPassword: newPw };
         const response = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) });
         const result = await response.json();
@@ -190,7 +219,6 @@ async function saveAdminChanges() {
             }
         });
 
-        // 감독표 저장 시에는 이미 sheetName: '감독표' 가 명시되어 있어 에러가 나지 않았던 것입니다.
         const payload = { action: 'saveSchedule', sheetId: SHEET_ID, sheetName: '감독표', data: newData };
         const response = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) });
         const result = await response.json();
