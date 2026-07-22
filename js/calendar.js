@@ -38,19 +38,26 @@ function buildCalendarHTML(year, month, rows, headers, isAdmin) {
     html += '<colgroup><col style="width: 10%;"><col style="width: 16%;"><col style="width: 16%;"><col style="width: 16%;"><col style="width: 16%;"><col style="width: 16%;"><col style="width: 10%;"></colgroup>';
     html += '<tr><th>일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th></tr><tr>';
 
-    // ★ 달력의 총 필요 칸 수(주 단위)를 계산하여 불필요한 빈 테두리 행을 제거합니다.
-    const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
     let dayCount = 1;
+    let i = 0;
     
-    for (let i = 0; i < totalCells; i++) {
-        if (i < firstDay || dayCount > daysInMonth) html += '<td></td>';
-        else {
+    // ★ 빈 줄 생성 원천 차단: while문으로 해당 월이 끝나면 즉시 표 그리기를 종료합니다.
+    while (true) {
+        if (i > 0 && i % 7 === 0) {
+            if (dayCount > daysInMonth) break; // 이번 달 날짜가 다 끝났다면 새 줄을 만들지 않고 즉시 탈출
+            html += '</tr><tr>';
+        }
+        
+        if (i < firstDay || dayCount > daysInMonth) {
+            html += '<td></td>';
+        } else {
             const dayDataHtml = findDataForCalendar(rows, month, dayCount, headers, isAdmin);
             html += `<td>${dayDataHtml}</td>`;
             dayCount++;
         }
-        if ((i + 1) % 7 === 0 && (i + 1) < totalCells) html += '</tr><tr>';
+        i++;
     }
+    
     return html + '</tr></table>';
 }
 
@@ -75,9 +82,9 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
             for (let j = 2; j < row.length; j++) {
                 if (row[j] && row[j].trim() !== '') {
                     let loc = headers[j] ? headers[j].trim() : '기타';
+                    // 비고 내용만 수집하고 선생님 숫자는 올리지 않습니다.
                     if (loc.includes('비고')) {
                         bigoList.push(row[j]);
-                        // ★ 비고란만 있을 때는 totalTeacherCount를 올리지 않습니다! (블록 생성 방지)
                     }
                     else {
                         let baseLoc = loc; let timeMark = '';
@@ -90,7 +97,7 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
                         
                         if (!groups[baseLoc]) groups[baseLoc] = []; 
                         groups[baseLoc].push({ name: row[j].trim(), timeMark: timeMark });
-                        totalTeacherCount++; // 교사 데이터가 있을 때만 카운트 증가
+                        totalTeacherCount++; // 진짜 선생님이 있을 때만 카운트 증가
                     }
                 }
             }
@@ -99,13 +106,13 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
                 bigoStr = `<span style="color: #e74c3c; font-size: 13.5px; font-weight: bold; margin-left: 6px; word-break: keep-all;">${bigoList.join(', ')}</span>`;
             }
 
-            // ★ 실제 배정된 교사가 1명이라도 있을 때만 블록 4개를 그립니다.
+            // ★ 선생님이 0명이면 이 안의 블록 생성 로직이 아예 실행되지 않습니다.
             if (totalTeacherCount > 0) {
-                let showTimeHeaders = Object.values(groups).some(g => g.length >= 2);
+                // ★ 실제 '오후', '야간' 같은 시간대 데이터가 배열에 존재할 때만 공간을 엽니다.
+                let showTimeHeaders = (dayTimeMarks.length > 0); 
                 
-                let topHeaderHtml = `<div style="display: flex; justify-content: center; align-items: flex-end; margin-bottom: 3px; min-height: 14px;">`;
-
                 if (showTimeHeaders) {
+                    let topHeaderHtml = `<div style="display: flex; justify-content: center; align-items: flex-end; margin-bottom: 3px; min-height: 14px;">`;
                     topHeaderHtml += `<div style="display:flex; gap:5px; justify-content:center;">`;
                     dayTimeMarks.forEach(tm => { 
                         let tmColor = '#555'; 
@@ -114,11 +121,10 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
                         
                         topHeaderHtml += `<div style="width:55px; text-align:center; font-size:11.5px; color:${tmColor}; font-weight:bold;">${tm}</div>`; 
                     });
-                    topHeaderHtml += `</div>`;
+                    topHeaderHtml += `</div></div>`;
+                    result += topHeaderHtml;
                 }
-                topHeaderHtml += `</div>`;
-
-                result += topHeaderHtml;
+                // showTimeHeaders가 false이면 불필요한 빈 공간(여백) 태그를 전혀 넣지 않습니다.
 
                 const locOrder = ['2층', '3층', '4층', '사감'];
                 const sortedLocs = locOrder.concat(Object.keys(groups).filter(l => !locOrder.includes(l)));
@@ -134,7 +140,6 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
 
                     result += `<div class="cal-item" style="color: ${textColor}; background-color: ${bgColor}; border-left-color: ${borderColor};">`;
                     
-                    // ★ inline CSS에서도 블록 높이를 20px로 슬림하게 줄였습니다 ★
                     let namesHtml = `<div class="drop-zone" data-loc="${baseLoc}" data-month="${month}" data-day="${day}" style="justify-content:center; width:100%; min-height:20px; gap:3px;">`;
 
                     if (showTimeHeaders) {
