@@ -92,16 +92,26 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
                 
                 let topHeaderHtml = `<div style="position: relative; display: flex; justify-content: center; align-items: flex-end; margin-bottom: 5px; min-height: 16px;">`;
                 
+                // ★ 비고 텍스트 색상을 분홍색(#e83e8c)으로 변경
                 if (bigoList.length > 0) {
-                    topHeaderHtml += `<div style="position: absolute; left: 2px; bottom: 0; color: #e74c3c; font-size: 13px; font-weight: bold; white-space: nowrap;">${bigoList.join(', ')}</div>`;
+                    topHeaderHtml += `<div style="position: absolute; left: 2px; bottom: 0; color: #e83e8c; font-size: 13px; font-weight: bold; white-space: nowrap;">${bigoList.join(', ')}</div>`;
                 }
 
+                // ★ 시간대 헤더 색상 조건별 변경 (오후: 붉은색, 야간: 회색)
                 if (showTimeHeaders) {
                     topHeaderHtml += `<div style="display:flex; gap:5px; justify-content:center;">`;
-                    dayTimeMarks.forEach(tm => { topHeaderHtml += `<div style="width:55px; text-align:center; font-size:11.5px; color:#555; font-weight:bold;">${tm}</div>`; });
+                    dayTimeMarks.forEach(tm => { 
+                        let tmColor = '#555'; // 기본 색상
+                        if (tm.includes('오후')) tmColor = '#e74c3c'; // 붉은색
+                        else if (tm.includes('야간')) tmColor = '#7f8c8d'; // 회색
+                        
+                        topHeaderHtml += `<div style="width:55px; text-align:center; font-size:11.5px; color:${tmColor}; font-weight:bold;">${tm}</div>`; 
+                    });
                     topHeaderHtml += `</div>`;
                 }
                 topHeaderHtml += `</div>`;
+
+                result += topHeaderHtml;
 
                 const locOrder = ['2층', '3층', '4층', '사감'];
                 const sortedLocs = locOrder.concat(Object.keys(groups).filter(l => !locOrder.includes(l)));
