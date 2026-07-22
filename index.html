@@ -65,7 +65,6 @@
 </head>
 <body>
 
-<!-- 메인 화면 -->
 <div class="container" id="loginScreen">
     <h1>🏫 야간자율학습 감독 확인</h1>
     <div class="input-group">
@@ -81,7 +80,6 @@
     <div id="loading">데이터를 불러오는 중입니다... 잠시만 기다려주세요.</div>
 </div>
 
-<!-- 개인 리스트 결과 화면 -->
 <div class="container result-area" id="resultScreen">
     <h1 id="resultTitle" style="text-align: center;"></h1>
     <div class="month-filter-container" id="monthFilterContainer"></div>
@@ -89,7 +87,6 @@
     <div style="text-align: center;"><button class="back-btn" onclick="goBack()">돌아가기</button></div>
 </div>
 
-<!-- 일반 교사용 달력 화면 -->
 <div class="container" id="calendarScreen">
     <div class="calendar-header">
         <button class="cal-nav-btn" onclick="changeMonth(-1, false)">◀ 이전</button>
@@ -100,7 +97,6 @@
     <div style="text-align: center;"><button class="back-btn" onclick="goBack()">돌아가기</button></div>
 </div>
 
-<!-- 관리자 로그인 화면 -->
 <div class="container" id="adminLoginScreen">
     <h1>⚙️ 관리자 로그인</h1>
     <div class="input-group">
@@ -111,7 +107,6 @@
     <div style="text-align: center;"><button class="back-btn" onclick="goBack()">돌아가기</button></div>
 </div>
 
-<!-- 관리자 전용 캘린더 화면 -->
 <div class="container" id="adminScreen">
     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 10px;">
         <h1 style="color: #e74c3c; margin:0;">🛠️ 관리자 모드 (드래그 저장)</h1>
@@ -131,7 +126,6 @@
     <div style="text-align: center;"><button class="back-btn" onclick="goBack()">로그아웃 및 돌아가기</button></div>
 </div>
 
-<!-- 최고관리자 계정 관리 화면 -->
 <div class="container" id="superAdminScreen">
     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 10px;">
         <h1 style="color: #2980b9; margin:0;">👑 최고관리자: 계정 관리</h1>
@@ -158,8 +152,13 @@
     <div style="text-align: center;"><button class="back-btn" onclick="switchScreen('adminScreen')">캘린더로 돌아가기</button></div>
 </div>
 
-<!-- 외부 JS 파일 불러오기 -->
-<script src="app.js"></script>
+<!-- 기능별로 완벽하게 분리된 라이브러리 파일들 (순서 유지 필수) -->
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/search.js"></script>
+<script src="js/calendar.js"></script>
+<script src="js/admin.js"></script>
 
 </body>
 </html>
