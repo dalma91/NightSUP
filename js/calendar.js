@@ -38,15 +38,18 @@ function buildCalendarHTML(year, month, rows, headers, isAdmin) {
     html += '<colgroup><col style="width: 10%;"><col style="width: 16%;"><col style="width: 16%;"><col style="width: 16%;"><col style="width: 16%;"><col style="width: 16%;"><col style="width: 10%;"></colgroup>';
     html += '<tr><th>일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th></tr><tr>';
 
+    // ★ 달력의 총 필요 칸 수(주 단위)를 계산하여 불필요한 빈 테두리 행을 제거합니다.
+    const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
     let dayCount = 1;
-    for (let i = 0; i < 42; i++) {
+    
+    for (let i = 0; i < totalCells; i++) {
         if (i < firstDay || dayCount > daysInMonth) html += '<td></td>';
         else {
             const dayDataHtml = findDataForCalendar(rows, month, dayCount, headers, isAdmin);
             html += `<td>${dayDataHtml}</td>`;
             dayCount++;
         }
-        if ((i + 1) % 7 === 0) html += '</tr><tr>';
+        if ((i + 1) % 7 === 0 && (i + 1) < totalCells) html += '</tr><tr>';
     }
     return html + '</tr></table>';
 }
@@ -74,7 +77,7 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
                     let loc = headers[j] ? headers[j].trim() : '기타';
                     if (loc.includes('비고')) {
                         bigoList.push(row[j]);
-                        totalTeacherCount++;
+                        // ★ 비고란만 있을 때는 totalTeacherCount를 올리지 않습니다! (블록 생성 방지)
                     }
                     else {
                         let baseLoc = loc; let timeMark = '';
@@ -87,7 +90,7 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
                         
                         if (!groups[baseLoc]) groups[baseLoc] = []; 
                         groups[baseLoc].push({ name: row[j].trim(), timeMark: timeMark });
-                        totalTeacherCount++;
+                        totalTeacherCount++; // 교사 데이터가 있을 때만 카운트 증가
                     }
                 }
             }
@@ -96,16 +99,16 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
                 bigoStr = `<span style="color: #e74c3c; font-size: 13.5px; font-weight: bold; margin-left: 6px; word-break: keep-all;">${bigoList.join(', ')}</span>`;
             }
 
+            // ★ 실제 배정된 교사가 1명이라도 있을 때만 블록 4개를 그립니다.
             if (totalTeacherCount > 0) {
                 let showTimeHeaders = Object.values(groups).some(g => g.length >= 2);
                 
-                let topHeaderHtml = `<div style="display: flex; justify-content: center; align-items: flex-end; margin-bottom: 5px; min-height: 16px;">`;
+                let topHeaderHtml = `<div style="display: flex; justify-content: center; align-items: flex-end; margin-bottom: 3px; min-height: 14px;">`;
 
                 if (showTimeHeaders) {
                     topHeaderHtml += `<div style="display:flex; gap:5px; justify-content:center;">`;
                     dayTimeMarks.forEach(tm => { 
                         let tmColor = '#555'; 
-                        // ★ 오후는 파란색, 야간은 녹색으로 변경 ★
                         if (tm.includes('오후')) tmColor = '#0056b3'; 
                         else if (tm.includes('야간')) tmColor = '#198754'; 
                         
@@ -131,7 +134,8 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
 
                     result += `<div class="cal-item" style="color: ${textColor}; background-color: ${bgColor}; border-left-color: ${borderColor};">`;
                     
-                    let namesHtml = `<div class="drop-zone" data-loc="${baseLoc}" data-month="${month}" data-day="${day}" style="justify-content:center; width:100%; min-height:25px; gap:5px;">`;
+                    // ★ inline CSS에서도 블록 높이를 20px로 슬림하게 줄였습니다 ★
+                    let namesHtml = `<div class="drop-zone" data-loc="${baseLoc}" data-month="${month}" data-day="${day}" style="justify-content:center; width:100%; min-height:20px; gap:3px;">`;
 
                     if (showTimeHeaders) {
                         dayTimeMarks.forEach(tm => {
@@ -144,7 +148,7 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
                                 let itemId = `drag-${month}-${day}-${baseLoc}-${tm}-${rawName}`;
                                 namesHtml += `<div style="width:55px; text-align:center;"><span class="draggable-name" draggable="true" id="${itemId}" data-tm="${tm}" data-name="${rawName}">${displayStr}</span></div>`;
                             } else {
-                                namesHtml += `<div style="width:55px; text-align:center; font-weight:bold; font-size:12.5px;">${displayStr}</div>`;
+                                namesHtml += `<div style="width:55px; text-align:center; font-weight:bold; font-size:12px;">${displayStr}</div>`;
                             }
                         });
                     } else {
@@ -157,7 +161,7 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
                                     let itemId = `drag-${month}-${day}-${baseLoc}-${idx}-${rawName}`;
                                     namesHtml += `<span class="draggable-name" draggable="true" id="${itemId}" data-tm="${tm}" data-name="${rawName}">${displayStr}</span>`;
                                 } else {
-                                    namesHtml += `<span style="font-weight:bold; font-size:12.5px; margin-right:5px;">${displayStr}</span>`;
+                                    namesHtml += `<span style="font-weight:bold; font-size:12px; margin-right:4px;">${displayStr}</span>`;
                                 }
                             });
                         }
@@ -169,7 +173,7 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
         }
     }
     
-    return `<div class="cal-date" style="display: flex; align-items: center; margin-bottom: 5px;"><span style="font-size: 16px;">${day}</span>${bigoStr}</div>` + result;
+    return `<div class="cal-date" style="display: flex; align-items: center; margin-bottom: 4px;"><span style="font-size: 15px;">${day}</span>${bigoStr}</div>` + result;
 }
 
 function setupDragAndDrop() {
