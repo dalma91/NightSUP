@@ -10,7 +10,7 @@
         
         #loginScreen, #adminLoginScreen { max-width: 380px; padding: 40px 20px; }
         
-        /* ★ 화면을 훨씬 넓게(1400px) 잡아 좌우 배치가 넉넉하게 들어가도록 설정 ★ */
+        /* ★ 화면을 넓게(1400px) 잡아 좌우 배치가 넉넉하게 들어가도록 설정 ★ */
         #resultScreen, #adminScreen, #superAdminScreen { max-width: 1400px; width: 98%; }
         
         h1 { font-size: 22px; color: #333; margin-bottom: 25px; }
@@ -46,7 +46,7 @@
         .calendar-header { display: flex; justify-content: center; align-items: center; margin-bottom: 10px; }
         .cal-nav-btn { background-color: #f39c12; width: auto; padding: 6px 12px; font-size: 14px; margin: 0 15px; }
         
-        /* ★ 캘린더 폭을 더욱 슬림하게 조절 ★ */
+        /* ★ 캘린더 폭을 슬림하게 조절 ★ */
         .calendar-table { width: 100%; border-collapse: collapse; margin-top: 10px; table-layout: fixed; }
         .calendar-table th, .calendar-table td { border: 1px solid #ddd; padding: 2px; vertical-align: top; height: 60px; overflow: hidden; }
         .calendar-table th { background-color: #f8f9fa; text-align: center; height: auto; padding: 6px 0; font-size: 13px; }
@@ -103,7 +103,7 @@
 </div>
 
 <div class="container result-area" id="resultScreen">
-    <!-- ★ 새로 추가된 좌우 배치 감싸개(Wrapper) ★ -->
+    <!-- ★ 좌우 배치 감싸개(Wrapper) ★ -->
     <div class="layout-wrapper">
         
         <!-- 좌측: 나의 일정 -->
@@ -187,14 +187,15 @@
     <div style="text-align: center;"><button class="back-btn" style="width:auto; padding:10px 30px;" onclick="switchScreen('adminScreen')">캘린더로 돌아가기</button></div>
 </div>
 
-<!-- 스크립트 캐시 방지 버전 v=16 로 업데이트 -->
-<script src="js/config.js?v=16"></script>
-<script src="js/api.js?v=16"></script>
-<script src="js/ui.js?v=16"></script>
-<script src="js/search.js?v=16"></script>
-<script src="js/calendar.js?v=16"></script>
-<script src="js/admin.js?v=16"></script>
+<!-- ★ 스크립트 캐시 방지 버전 v=17 로 업데이트 완료 ★ -->
+<script src="js/config.js?v=17"></script>
+<script src="js/api.js?v=17"></script>
+<script src="js/ui.js?v=17"></script>
+<script src="js/search.js?v=17"></script>
+<script src="js/calendar.js?v=17"></script>
+<script src="js/admin.js?v=17"></script>
 
+<!-- ★ 에러 원천 차단 방어 코드 ★ -->
 <script>
     async function searchAndShowBoth() {
         try {

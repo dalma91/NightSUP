@@ -65,6 +65,10 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
     let result = '';
     let bigoStr = ''; 
     
+    // ★ 현재 검색된 선생님 이름을 가져옵니다 (하이라이트 처리를 위함)
+    const teacherNameInput = document.getElementById('teacherName');
+    const searchedName = teacherNameInput ? teacherNameInput.value.trim() : '';
+    
     const searchStr1 = month + '/' + day; const searchStr2 = month + '.' + day;
     
     for (let i = 1; i < rows.length; i++) {
@@ -104,7 +108,6 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
             }
             
             if (bigoList.length > 0) {
-                // 폰트 크기 미세 축소 (13.5px -> 12px)
                 bigoStr = `<span style="color: #e74c3c; font-size: 12px; font-weight: bold; margin-left: 4px; word-break: keep-all;">${bigoList.join(', ')}</span>`;
             }
 
@@ -119,7 +122,6 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
                         if (tm.includes('오후')) tmColor = '#0056b3'; 
                         else if (tm.includes('야간')) tmColor = '#198754'; 
                         
-                        // ★ 고정폭(width:55px)을 유연한 폭(flex:1)으로 변경
                         topHeaderHtml += `<div style="flex:1; text-align:center; font-size:11px; color:${tmColor}; font-weight:bold;">${tm}</div>`; 
                     });
                     topHeaderHtml += `</div></div>`;
@@ -140,7 +142,6 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
 
                     result += `<div class="cal-item" style="color: ${textColor}; background-color: ${bgColor}; border-left-color: ${borderColor};">`;
                     
-                    // gap 축소
                     let namesHtml = `<div class="drop-zone" data-loc="${baseLoc}" data-month="${month}" data-day="${day}" style="justify-content:center; width:100%; min-height:18px; gap:2px;">`;
 
                     if (showTimeHeaders) {
@@ -149,12 +150,18 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
                             let rawName = person ? person.name : '';
                             let displayStr = rawName; 
                             
-                            // ★ 고정폭을 유연하게(flex:1) 변경
+                            // ★ 하이라이트 조건: 달력의 이름과 검색한 이름이 완전히 동일할 때
+                            let isMyTurn = (rawName !== '' && searchedName !== '' && rawName === searchedName);
+                            
                             if(isAdmin && displayStr) {
+                                // 관리자 모드 하이라이트 (드래그 가능 요소)
+                                let adminMyStyle = isMyTurn ? 'border: 2px solid #e74c3c !important; background-color: #ffe6e6 !important; color: #c0392b !important;' : '';
                                 let itemId = `drag-${month}-${day}-${baseLoc}-${tm}-${rawName}`;
-                                namesHtml += `<div style="flex:1; text-align:center;"><span class="draggable-name" draggable="true" id="${itemId}" data-tm="${tm}" data-name="${rawName}">${displayStr}</span></div>`;
+                                namesHtml += `<div style="flex:1; text-align:center;"><span class="draggable-name" draggable="true" id="${itemId}" data-tm="${tm}" data-name="${rawName}" style="${adminMyStyle}">${displayStr}</span></div>`;
                             } else {
-                                namesHtml += `<div style="flex:1; text-align:center; font-weight:bold; font-size:11px;">${displayStr}</div>`;
+                                // 일반 모드 하이라이트 (붉은색 진한 테두리와 옅은 붉은 배경)
+                                let myStyle = isMyTurn ? 'border: 2px solid #e74c3c; background-color: #ffe6e6; color: #c0392b; border-radius: 4px; box-sizing: border-box; padding: 1px;' : '';
+                                namesHtml += `<div style="flex:1; text-align:center; font-weight:bold; font-size:11px; ${myStyle}">${displayStr}</div>`;
                             }
                         });
                     } else {
@@ -162,12 +169,20 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
                             group.forEach((g, idx) => {
                                 let rawName = g.name;
                                 let displayStr = rawName; 
+                                
+                                // ★ 하이라이트 조건: 달력의 이름과 검색한 이름이 완전히 동일할 때
+                                let isMyTurn = (rawName !== '' && searchedName !== '' && rawName === searchedName);
+                                
                                 if(isAdmin) {
+                                    // 관리자 모드 하이라이트 (드래그 가능 요소)
+                                    let adminMyStyle = isMyTurn ? 'border: 2px solid #e74c3c !important; background-color: #ffe6e6 !important; color: #c0392b !important;' : '';
                                     let tm = g.timeMark || '';
                                     let itemId = `drag-${month}-${day}-${baseLoc}-${idx}-${rawName}`;
-                                    namesHtml += `<span class="draggable-name" draggable="true" id="${itemId}" data-tm="${tm}" data-name="${rawName}">${displayStr}</span>`;
+                                    namesHtml += `<span class="draggable-name" draggable="true" id="${itemId}" data-tm="${tm}" data-name="${rawName}" style="${adminMyStyle}">${displayStr}</span>`;
                                 } else {
-                                    namesHtml += `<span style="font-weight:bold; font-size:11px; margin-right:2px;">${displayStr}</span>`;
+                                    // 일반 모드 하이라이트 (붉은색 진한 테두리와 옅은 붉은 배경)
+                                    let myStyle = isMyTurn ? 'border: 2px solid #e74c3c; background-color: #ffe6e6; color: #c0392b; border-radius: 4px; padding: 1px 4px; margin-right: 2px;' : 'margin-right: 2px;';
+                                    namesHtml += `<span style="font-weight:bold; font-size:11px; ${myStyle}">${displayStr}</span>`;
                                 }
                             });
                         }
