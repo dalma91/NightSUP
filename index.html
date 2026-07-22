@@ -9,7 +9,9 @@
         .container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 95%; max-width: 800px; text-align: center; box-sizing: border-box; }
         
         #loginScreen, #adminLoginScreen { max-width: 380px; padding: 40px 20px; }
-        #calendarScreen, #adminScreen, #superAdminScreen { max-width: 1250px; width: 98%; }
+        
+        /* ★ 핵심 수정: resultScreen도 달력이 들어가므로 넓게(1250px) 설정합니다. (기존 calendarScreen 삭제) ★ */
+        #resultScreen, #adminScreen, #superAdminScreen { max-width: 1250px; width: 98%; }
         
         h1 { font-size: 22px; color: #333; margin-bottom: 25px; }
         .input-group { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
@@ -34,7 +36,7 @@
         .month-btn { background-color: #ecf0f1; color: #2c3e50; border: 1px solid #bdc3c7; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 13px; width: auto; font-weight: normal; margin: 0;}
         .month-btn.active { background-color: #4CAF50; color: white; border-color: #4CAF50; font-weight: bold; }
         
-        .result-area, #calendarScreen, #adminLoginScreen, #adminScreen, #superAdminScreen { display: none; text-align: left; }
+        .result-area, #adminLoginScreen, #adminScreen, #superAdminScreen { display: none; text-align: left; }
         .month-section { margin-bottom: 20px; }
         .month-title { font-weight: bold; font-size: 18px; color: #2c3e50; border-bottom: 2px solid #4CAF50; padding-bottom: 5px; margin-bottom: 10px; }
         .date-list { list-style-type: none; padding: 0; margin: 0; }
@@ -78,11 +80,14 @@
 <div class="container" id="loginScreen">
     <h1>🏫 감독 일정 확인</h1>
     <div class="input-group">
-        <input type="text" id="teacherName" placeholder="선생님 성함을 입력하세요" style="ime-mode: active;" onkeyup="if(window.event.keyCode==13){checkDates()}">
-        <button onclick="checkDates()">내 일정 검색</button>
+        <!-- 엔터키와 버튼 클릭 시 [나의일정+전체달력] 동시 렌더링 함수를 호출하도록 변경 -->
+        <input type="text" id="teacherName" placeholder="선생님 성함을 입력하세요" style="ime-mode: active;" onkeyup="if(window.event.keyCode==13){searchAndShowBoth()}">
+        <button onclick="searchAndShowBoth()">내 일정 검색</button>
     </div>
     
-    <!-- ★ 여기에 있던 '전체 달력 보기' 버튼을 아래 결과 화면으로 이동했습니다. ★ -->
+    <div style="display: flex; flex-direction: column; align-items: center;">
+        <button class="cal-btn" onclick="showCalendarOnly()">전체 달력 보기</button>
+    </div>
     
     <div class="admin-link-box">
         <button class="admin-btn" onclick="switchScreen('adminLoginScreen')">⚙️ 관리자 모드</button>
@@ -90,26 +95,30 @@
     <div id="loading">데이터를 불러오는 중입니다...</div>
 </div>
 
+<!-- ★ 나의 일정과 전체 달력이 한 곳에 모인 통합 화면입니다. ★ -->
 <div class="container result-area" id="resultScreen">
-    <h1 id="resultTitle" style="text-align: center;"></h1>
-    <div class="month-filter-container" id="monthFilterContainer"></div>
-    <div id="resultsContainer"></div>
     
-    <!-- ★ 개인 일정을 확인한 후 바로 전체 달력을 볼 수 있도록 나란히 배치했습니다. ★ -->
-    <div style="display: flex; justify-content: center; gap: 10px; margin-top: 20px;">
-        <button class="cal-btn" style="width:auto; padding:10px 20px; margin: 0;" onclick="initCalendar(false)">📅 전체 달력 보기</button>
-        <button class="back-btn" style="width:auto; padding:10px 20px; margin: 0;" onclick="goBack()">처음으로 돌아가기</button>
+    <!-- 1. 나의 일정 영역 -->
+    <div id="myScheduleArea">
+        <h1 id="resultTitle" style="text-align: center;"></h1>
+        <div class="month-filter-container" id="monthFilterContainer"></div>
+        <div id="resultsContainer"></div>
+        <!-- 시각적 구분을 위한 점선 -->
+        <hr style="border: 0; border-top: 2px dashed #ccc; margin: 40px 0 30px 0;">
     </div>
-</div>
-
-<div class="container" id="calendarScreen">
-    <div class="calendar-header">
-        <button class="cal-nav-btn" onclick="changeMonth(-1, false)">◀ 이전</button>
-        <span id="calendarTitle" style="font-size:22px; font-weight:bold;"></span>
-        <button class="cal-nav-btn" onclick="changeMonth(1, false)">다음 ▶</button>
+    
+    <!-- 2. 전체 달력 영역 -->
+    <div id="calendarArea">
+        <h1 style="text-align: center; color: #2c3e50; margin-bottom: 20px; font-size: 20px;">📅 전체 감독 달력</h1>
+        <div class="calendar-header">
+            <button class="cal-nav-btn" onclick="changeMonth(-1, false)">◀ 이전</button>
+            <span id="calendarTitle" style="font-size:22px; font-weight:bold;"></span>
+            <button class="cal-nav-btn" onclick="changeMonth(1, false)">다음 ▶</button>
+        </div>
+        <div id="calendarContainer"></div>
     </div>
-    <div id="calendarContainer"></div>
-    <div style="text-align: center;"><button class="back-btn" style="width:auto; padding:10px 30px;" onclick="goBack()">돌아가기</button></div>
+    
+    <div style="text-align: center; margin-top: 30px;"><button class="back-btn" style="width:auto; padding:10px 30px;" onclick="goBack()">처음으로 돌아가기</button></div>
 </div>
 
 <div class="container" id="adminLoginScreen">
@@ -168,13 +177,48 @@
     <div style="text-align: center;"><button class="back-btn" style="width:auto; padding:10px 30px;" onclick="switchScreen('adminScreen')">캘린더로 돌아가기</button></div>
 </div>
 
-<!-- 스크립트 캐시 방지 버전 v=11 로 업데이트 -->
-<script src="js/config.js?v=11"></script>
-<script src="js/api.js?v=11"></script>
-<script src="js/ui.js?v=11"></script>
-<script src="js/search.js?v=11"></script>
-<script src="js/calendar.js?v=11"></script>
-<script src="js/admin.js?v=11"></script>
+<!-- 스크립트 캐시 방지 버전 v=12 로 업데이트 -->
+<script src="js/config.js?v=12"></script>
+<script src="js/api.js?v=12"></script>
+<script src="js/ui.js?v=12"></script>
+<script src="js/search.js?v=12"></script>
+<script src="js/calendar.js?v=12"></script>
+<script src="js/admin.js?v=12"></script>
+
+<!-- ★ 동시 렌더링을 제어하는 핵심 자바스크립트 추가 ★ -->
+<script>
+    // 1. 이름 검색 시 [나의 일정] + [전체 달력] 모두 표시
+    async function searchAndShowBoth() {
+        const nameInput = document.getElementById('teacherName').value.trim();
+        if (!nameInput) {
+            alert('선생님 성함을 입력하세요.');
+            return;
+        }
+        
+        // 내 일정 영역을 보이도록 활성화
+        document.getElementById('myScheduleArea').style.display = 'block';
+        
+        // 기존 이름 검색 로직 실행 (완료될 때까지 기다림)
+        if (typeof checkDates === 'function') {
+            try {
+                let res = checkDates();
+                if(res instanceof Promise) await res;
+            } catch(e) { console.error(e); }
+        }
+        
+        // 전체 달력 로드
+        await initCalendar(false);
+    }
+
+    // 2. 전체 달력만 보기 클릭 시 [나의 일정]을 숨기고 달력만 표시
+    async function showCalendarOnly() {
+        // 내 일정 영역 숨김 처리
+        document.getElementById('myScheduleArea').style.display = 'none';
+        
+        // 전체 달력 로드
+        await initCalendar(false);
+    }
+</script>
 
 </body>
 </html>
