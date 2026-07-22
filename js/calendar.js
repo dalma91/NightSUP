@@ -33,14 +33,17 @@ async function loadAndRenderCalendar(isAdmin) {
 function buildCalendarHTML(year, month, rows, headers, isAdmin) {
     const firstDay = new Date(year, month - 1, 1).getDay();
     const daysInMonth = new Date(year, month, 0).getDate(); 
-    let html = '<table class="calendar-table"><tr><th>일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th></tr><tr>';
+    
+    let html = '<table class="calendar-table">';
+    html += '<colgroup><col style="width: 10%;"><col style="width: 16%;"><col style="width: 16%;"><col style="width: 16%;"><col style="width: 16%;"><col style="width: 16%;"><col style="width: 10%;"></colgroup>';
+    html += '<tr><th>일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th></tr><tr>';
 
     let dayCount = 1;
     for (let i = 0; i < 42; i++) {
         if (i < firstDay || dayCount > daysInMonth) html += '<td></td>';
         else {
             const dayDataHtml = findDataForCalendar(rows, month, dayCount, headers, isAdmin);
-            html += `<td><div class="cal-date">${dayCount}</div>${dayDataHtml}</td>`;
+            html += `<td>${dayDataHtml}</td>`;
             dayCount++;
         }
         if ((i + 1) % 7 === 0) html += '</tr><tr>';
@@ -50,6 +53,8 @@ function buildCalendarHTML(year, month, rows, headers, isAdmin) {
 
 function findDataForCalendar(rows, month, day, headers, isAdmin) {
     let result = '';
+    let bigoStr = ''; 
+    
     const searchStr1 = month + '/' + day; const searchStr2 = month + '.' + day;
     
     for (let i = 1; i < rows.length; i++) {
@@ -86,24 +91,23 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
                     }
                 }
             }
+            
+            if (bigoList.length > 0) {
+                bigoStr = `<span style="color: #e74c3c; font-size: 13.5px; font-weight: bold; margin-left: 6px; word-break: keep-all;">${bigoList.join(', ')}</span>`;
+            }
 
             if (totalTeacherCount > 0) {
                 let showTimeHeaders = Object.values(groups).some(g => g.length >= 2);
                 
-                let topHeaderHtml = `<div style="position: relative; display: flex; justify-content: center; align-items: flex-end; margin-bottom: 5px; min-height: 16px;">`;
-                
-                // ★ 비고 텍스트 색상을 분홍색(#e83e8c)으로 변경
-                if (bigoList.length > 0) {
-                    topHeaderHtml += `<div style="position: absolute; left: 2px; bottom: 0; color: #e83e8c; font-size: 13px; font-weight: bold; white-space: nowrap;">${bigoList.join(', ')}</div>`;
-                }
+                let topHeaderHtml = `<div style="display: flex; justify-content: center; align-items: flex-end; margin-bottom: 5px; min-height: 16px;">`;
 
-                // ★ 시간대 헤더 색상 조건별 변경 (오후: 붉은색, 야간: 회색)
                 if (showTimeHeaders) {
                     topHeaderHtml += `<div style="display:flex; gap:5px; justify-content:center;">`;
                     dayTimeMarks.forEach(tm => { 
-                        let tmColor = '#555'; // 기본 색상
-                        if (tm.includes('오후')) tmColor = '#e74c3c'; // 붉은색
-                        else if (tm.includes('야간')) tmColor = '#7f8c8d'; // 회색
+                        let tmColor = '#555'; 
+                        // ★ 오후는 파란색, 야간은 녹색으로 변경 ★
+                        if (tm.includes('오후')) tmColor = '#0056b3'; 
+                        else if (tm.includes('야간')) tmColor = '#198754'; 
                         
                         topHeaderHtml += `<div style="width:55px; text-align:center; font-size:11.5px; color:${tmColor}; font-weight:bold;">${tm}</div>`; 
                     });
@@ -164,7 +168,8 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
             break; 
         }
     }
-    return result;
+    
+    return `<div class="cal-date" style="display: flex; align-items: center; margin-bottom: 5px;"><span style="font-size: 16px;">${day}</span>${bigoStr}</div>` + result;
 }
 
 function setupDragAndDrop() {

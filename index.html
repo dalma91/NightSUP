@@ -10,8 +10,8 @@
         
         #loginScreen, #adminLoginScreen { max-width: 380px; padding: 40px 20px; }
         
-        /* ★ 달력과 계정 관리 화면의 폭을 대폭 확장하여 글자 꺾임 방지 ★ */
-        #calendarScreen, #adminScreen, #superAdminScreen { max-width: 1500px; width: 98%; }
+        /* ★ 달력 폭을 1250px로 적당히 좁혀서 한눈에 들어오게 설정 ★ */
+        #calendarScreen, #adminScreen, #superAdminScreen { max-width: 1250px; width: 98%; }
         
         h1 { font-size: 22px; color: #333; margin-bottom: 25px; }
         .input-group { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
@@ -45,11 +45,14 @@
         
         .calendar-header { display: flex; justify-content: center; align-items: center; margin-bottom: 15px; }
         .cal-nav-btn { background-color: #f39c12; width: auto; padding: 8px 15px; font-size: 15px; margin: 0 15px; }
+        
+        /* 테이블 전체 크기 고정 (table-layout: fixed) */
         .calendar-table { width: 100%; border-collapse: collapse; margin-top: 10px; table-layout: fixed; }
         .calendar-table th, .calendar-table td { border: 1px solid #ddd; padding: 6px; vertical-align: top; height: 110px; overflow: hidden; }
         .calendar-table th { background-color: #f8f9fa; text-align: center; height: auto; padding: 10px 0; font-size: 15px; }
         .calendar-table th:first-child, .calendar-table td:first-child { color: red; } 
         .calendar-table th:last-child, .calendar-table td:last-child { color: blue; } 
+        
         .cal-date { font-weight: bold; margin-bottom: 5px; text-align: left; font-size: 15px; }
         
         .cal-item { border-radius: 4px; margin-bottom: 4px; border-left: 4px solid #ccc; display: flex; align-items: center; padding: 4px; min-height: 25px; }
@@ -164,13 +167,13 @@
     <div style="text-align: center;"><button class="back-btn" style="width:auto; padding:10px 30px;" onclick="switchScreen('adminScreen')">캘린더로 돌아가기</button></div>
 </div>
 
-<!-- 기능별로 완벽하게 분리된 라이브러리 파일들 (캐시 방지 v=3) -->
-<script src="js/config.js?v=3"></script>
-<script src="js/api.js?v=3"></script>
-<script src="js/ui.js?v=3"></script>
-<script src="js/search.js?v=3"></script>
-<script src="js/calendar.js?v=3"></script>
-<script src="js/admin.js?v=3"></script>
+<!-- 스크립트 캐시 방지 버전 v=4 로 업데이트 -->
+<script src="js/config.js?v=4"></script>
+<script src="js/api.js?v=4"></script>
+<script src="js/ui.js?v=4"></script>
+<script src="js/search.js?v=4"></script>
+<script src="js/calendar.js?v=4"></script>
+<script src="js/admin.js?v=4"></script>
 
 </body>
 </html>
