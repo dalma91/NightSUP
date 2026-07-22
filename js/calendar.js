@@ -27,6 +27,10 @@ async function loadAndRenderCalendar(isAdmin) {
             document.getElementById('calendarContainer').innerHTML = calendarHtml;
             
             switchScreen('resultScreen');
+
+            if (typeof updateMyScheduleDisplay === 'function') {
+                updateMyScheduleDisplay();
+            }
         }
     } catch (error) { alert('오류 발생: ' + error.message); } finally { showLoading(false); }
 }
@@ -65,7 +69,6 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
     let result = '';
     let bigoStr = ''; 
     
-    // ★ 현재 검색된 선생님 이름을 가져옵니다 (하이라이트 처리를 위함)
     const teacherNameInput = document.getElementById('teacherName');
     const searchedName = teacherNameInput ? teacherNameInput.value.trim() : '';
     
@@ -144,44 +147,40 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
                     
                     let namesHtml = `<div class="drop-zone" data-loc="${baseLoc}" data-month="${month}" data-day="${day}" style="justify-content:center; width:100%; min-height:18px; gap:2px;">`;
 
-                    if (showTimeHeaders) {
+                    // ★ 핵심 수정: 사감(baseLoc === '사감')일 때는 2칸 분할(showTimeHeaders) 로직을 무조건 건너뜁니다!
+                    if (showTimeHeaders && baseLoc !== '사감') {
                         dayTimeMarks.forEach(tm => {
                             let person = group.find(g => g.timeMark === tm);
                             let rawName = person ? person.name : '';
                             let displayStr = rawName; 
                             
-                            // ★ 하이라이트 조건: 달력의 이름과 검색한 이름이 완전히 동일할 때
                             let isMyTurn = (rawName !== '' && searchedName !== '' && rawName === searchedName);
                             
                             if(isAdmin && displayStr) {
-                                // 관리자 모드 하이라이트 (드래그 가능 요소)
                                 let adminMyStyle = isMyTurn ? 'border: 2px solid #e74c3c !important; background-color: #ffe6e6 !important; color: #c0392b !important;' : '';
                                 let itemId = `drag-${month}-${day}-${baseLoc}-${tm}-${rawName}`;
                                 namesHtml += `<div style="flex:1; text-align:center;"><span class="draggable-name" draggable="true" id="${itemId}" data-tm="${tm}" data-name="${rawName}" style="${adminMyStyle}">${displayStr}</span></div>`;
                             } else {
-                                // 일반 모드 하이라이트 (붉은색 진한 테두리와 옅은 붉은 배경)
                                 let myStyle = isMyTurn ? 'border: 2px solid #e74c3c; background-color: #ffe6e6; color: #c0392b; border-radius: 4px; box-sizing: border-box; padding: 1px;' : '';
                                 namesHtml += `<div style="flex:1; text-align:center; font-weight:bold; font-size:11px; ${myStyle}">${displayStr}</div>`;
                             }
                         });
                     } else {
+                        // 사감은 분할되지 않으므로 무조건 여기(전체 중앙 정렬)를 타게 됩니다.
                         if (group.length > 0) {
                             group.forEach((g, idx) => {
                                 let rawName = g.name;
                                 let displayStr = rawName; 
                                 
-                                // ★ 하이라이트 조건: 달력의 이름과 검색한 이름이 완전히 동일할 때
                                 let isMyTurn = (rawName !== '' && searchedName !== '' && rawName === searchedName);
                                 
                                 if(isAdmin) {
-                                    // 관리자 모드 하이라이트 (드래그 가능 요소)
                                     let adminMyStyle = isMyTurn ? 'border: 2px solid #e74c3c !important; background-color: #ffe6e6 !important; color: #c0392b !important;' : '';
                                     let tm = g.timeMark || '';
                                     let itemId = `drag-${month}-${day}-${baseLoc}-${idx}-${rawName}`;
                                     namesHtml += `<span class="draggable-name" draggable="true" id="${itemId}" data-tm="${tm}" data-name="${rawName}" style="${adminMyStyle}">${displayStr}</span>`;
                                 } else {
-                                    // 일반 모드 하이라이트 (붉은색 진한 테두리와 옅은 붉은 배경)
-                                    let myStyle = isMyTurn ? 'border: 2px solid #e74c3c; background-color: #ffe6e6; color: #c0392b; border-radius: 4px; padding: 1px 4px; margin-right: 2px;' : 'margin-right: 2px;';
+                                    let myStyle = isMyTurn ? 'border: 2px solid #e74c3c; background-color: #ffe6e6; color: #c0392b; border-radius: 4px; padding: 1px 4px;' : '';
                                     namesHtml += `<span style="font-weight:bold; font-size:11px; ${myStyle}">${displayStr}</span>`;
                                 }
                             });
