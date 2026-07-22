@@ -10,7 +10,6 @@
         
         #loginScreen, #adminLoginScreen { max-width: 380px; padding: 40px 20px; }
         
-        /* ★ 화면을 넓게(1400px) 잡아 좌우 배치가 넉넉하게 들어가도록 설정 ★ */
         #resultScreen, #adminScreen, #superAdminScreen { max-width: 1400px; width: 98%; }
         
         h1 { font-size: 22px; color: #333; margin-bottom: 25px; }
@@ -32,9 +31,7 @@
         
         #loading { display: none; color: #e67e22; font-weight: bold; font-size: 14px; margin-top: 15px; }
         
-        .month-filter-container { display: none; flex-wrap: wrap; justify-content: center; gap: 6px; margin-bottom: 20px; }
-        .month-btn { background-color: #ecf0f1; color: #2c3e50; border: 1px solid #bdc3c7; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 13px; width: auto; font-weight: normal; margin: 0;}
-        .month-btn.active { background-color: #4CAF50; color: white; border-color: #4CAF50; font-weight: bold; }
+        .month-filter-container { display: none !important; }
         
         .result-area, #adminLoginScreen, #adminScreen, #superAdminScreen { display: none; text-align: left; }
         .month-section { margin-bottom: 20px; }
@@ -46,7 +43,6 @@
         .calendar-header { display: flex; justify-content: center; align-items: center; margin-bottom: 10px; }
         .cal-nav-btn { background-color: #f39c12; width: auto; padding: 6px 12px; font-size: 14px; margin: 0 15px; }
         
-        /* ★ 캘린더 폭을 슬림하게 조절 ★ */
         .calendar-table { width: 100%; border-collapse: collapse; margin-top: 10px; table-layout: fixed; }
         .calendar-table th, .calendar-table td { border: 1px solid #ddd; padding: 2px; vertical-align: top; height: 60px; overflow: hidden; }
         .calendar-table th { background-color: #f8f9fa; text-align: center; height: auto; padding: 6px 0; font-size: 13px; }
@@ -69,12 +65,12 @@
         .del-btn { background-color: #e74c3c; width: auto; padding: 6px 12px; font-size: 13px; margin: 0; }
         .add-btn { background-color: #27ae60; width: auto; padding: 12px 20px; font-size: 15px; margin: 0; }
 
-        /* ★ 좌우 배치 레이아웃 (플렉스박스) ★ */
-        .layout-wrapper { display: flex; gap: 20px; align-items: flex-start; }
-        #myScheduleArea { flex: 1; min-width: 250px; border-right: 1px solid #eee; padding-right: 20px; }
+        .layout-wrapper { display: flex; gap: 20px; align-items: stretch; }
+        
+        #myScheduleArea { flex: 1; min-width: 250px; border-right: 1px solid #eee; padding-right: 20px; display: flex; flex-direction: column; }
+        #resultsContainer { flex-grow: 1; }
         #calendarArea { flex: 3.5; min-width: 600px; }
 
-        /* 화면이 작아지면 다시 상하 배치로 부드럽게 변경 */
         @media (max-width: 950px) {
             .layout-wrapper { flex-direction: column; }
             #myScheduleArea { border-right: none; border-bottom: 2px dashed #eee; padding-right: 0; padding-bottom: 20px; width: 100%; }
@@ -103,17 +99,14 @@
 </div>
 
 <div class="container result-area" id="resultScreen">
-    <!-- ★ 좌우 배치 감싸개(Wrapper) ★ -->
     <div class="layout-wrapper">
         
-        <!-- 좌측: 나의 일정 -->
         <div id="myScheduleArea">
             <h1 id="resultTitle" style="text-align: center; margin-top: 0; font-size: 19px;"></h1>
-            <div class="month-filter-container" id="monthFilterContainer"></div>
             <div id="resultsContainer"></div>
+            <div class="month-filter-container" id="monthFilterContainer"></div>
         </div>
         
-        <!-- 우측: 전체 달력 -->
         <div id="calendarArea">
             <h1 style="text-align: center; color: #2c3e50; margin-top: 0; margin-bottom: 10px; font-size: 19px;">📅 전체 감독 달력</h1>
             <div class="calendar-header">
@@ -187,16 +180,76 @@
     <div style="text-align: center;"><button class="back-btn" style="width:auto; padding:10px 30px;" onclick="switchScreen('adminScreen')">캘린더로 돌아가기</button></div>
 </div>
 
-<!-- ★ 스크립트 캐시 방지 버전 v=17 로 업데이트 완료 ★ -->
-<script src="js/config.js?v=17"></script>
-<script src="js/api.js?v=17"></script>
-<script src="js/ui.js?v=17"></script>
-<script src="js/search.js?v=17"></script>
-<script src="js/calendar.js?v=17"></script>
-<script src="js/admin.js?v=17"></script>
+<!-- ★ 스크립트 캐시 방지 버전 v=21 로 업데이트 완료 ★ -->
+<script src="js/config.js?v=21"></script>
+<script src="js/api.js?v=21"></script>
+<script src="js/ui.js?v=21"></script>
+<script src="js/search.js?v=21"></script>
+<script src="js/calendar.js?v=21"></script>
+<script src="js/admin.js?v=21"></script>
 
-<!-- ★ 에러 원천 차단 방어 코드 ★ -->
 <script>
+    function updateMyScheduleDisplay() {
+        const sections = document.querySelectorAll('.month-section');
+        if (!sections || sections.length === 0) return;
+
+        // 캘린더에 표시된 당월 계산
+        const currentMonth = currentCalMonth;
+        let nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+        
+        // ★ 핵심 수정: 2월인 경우 학년도가 종료되므로 다음 달(3월)을 표시하지 않음
+        if (currentMonth === 2) {
+            nextMonth = -1; 
+        }
+        
+        let visibleCount = 0;
+
+        sections.forEach(sec => {
+            const titleEl = sec.querySelector('.month-title');
+            if (titleEl) {
+                const titleText = titleEl.innerText.trim();
+                const match = titleText.match(/(\d+)월/);
+                
+                if (match) {
+                    const secMonth = parseInt(match[1], 10);
+                    // 당월이거나 익월일 때만 표시 (2월일 때는 당월만 매칭됨)
+                    if (secMonth === currentMonth || secMonth === nextMonth) {
+                        sec.style.display = 'block';
+                        visibleCount++;
+                    } else {
+                        sec.style.display = 'none';
+                    }
+                } else {
+                    sec.style.display = 'none'; 
+                }
+            }
+        });
+        
+        const resultsContainer = document.getElementById('resultsContainer');
+        let emptyMsg = document.getElementById('emptyScheduleMsg');
+        
+        if (visibleCount === 0 && sections.length > 0) {
+            if (!emptyMsg) {
+                emptyMsg = document.createElement('p');
+                emptyMsg.id = 'emptyScheduleMsg';
+                emptyMsg.style.textAlign = 'center';
+                emptyMsg.style.color = '#7f8c8d';
+                emptyMsg.style.marginTop = '20px';
+                resultsContainer.appendChild(emptyMsg);
+            }
+            
+            // ★ 메시지 분기 처리: 2월일 때는 단독 메시지로 깔끔하게 표시
+            if (currentMonth === 2) {
+                emptyMsg.innerText = `선택하신 2월에는 배정된 일정이 없습니다.`;
+            } else {
+                emptyMsg.innerText = `선택하신 ${currentMonth}월과 ${nextMonth}월에는 배정된 일정이 없습니다.`;
+            }
+            emptyMsg.style.display = 'block';
+        } else if (emptyMsg) {
+            emptyMsg.style.display = 'none';
+        }
+    }
+
     async function searchAndShowBoth() {
         try {
             const nameInput = document.getElementById('teacherName');
@@ -207,7 +260,7 @@
             
             const scheduleArea = document.getElementById('myScheduleArea');
             if (scheduleArea) {
-                scheduleArea.style.display = 'block';
+                scheduleArea.style.display = 'flex'; 
             }
             
             if (typeof checkDates === 'function') {
