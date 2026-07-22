@@ -8,7 +8,7 @@
         body { font-family: 'Malgun Gothic', sans-serif; background-color: #f4f7f6; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         .container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 95%; max-width: 800px; text-align: center; }
         
-        #calendarScreen, #adminScreen { max-width: 1200px; }
+        #calendarScreen, #adminScreen, #superAdminScreen { max-width: 1200px; }
         
         h1 { font-size: 22px; color: #333; margin-bottom: 20px; }
         .input-group { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
@@ -17,7 +17,7 @@
         button { background-color: #4CAF50; color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 5px; cursor: pointer; width: 75%; font-weight: bold; margin-bottom: 10px;}
         button.cal-btn { background-color: #3498db; }
         button.admin-btn { background-color: #34495e; width: auto; font-size: 13px; padding: 8px 15px; margin-top: 15px;}
-        button.save-btn { background-color: #e74c3c; width: auto; padding: 10px 20px; margin-left: auto; display: block; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        button.save-btn { background-color: #e74c3c; width: auto; padding: 10px 20px; margin: 0; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
         button:hover { opacity: 0.9; }
         
         #loading { display: none; color: #e67e22; font-weight: bold; font-size: 15px; margin-top: 15px; }
@@ -27,7 +27,7 @@
         .month-btn { background-color: #ecf0f1; color: #2c3e50; border: 1px solid #bdc3c7; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 13px; width: auto; font-weight: normal; margin: 0;}
         .month-btn.active { background-color: #4CAF50; color: white; border-color: #4CAF50; font-weight: bold; }
         
-        .result-area, #calendarScreen, #adminLoginScreen, #adminScreen { display: none; text-align: left; }
+        .result-area, #calendarScreen, #adminLoginScreen, #adminScreen, #superAdminScreen { display: none; text-align: left; }
         .month-section { margin-bottom: 20px; }
         .month-title { font-weight: bold; font-size: 18px; color: #2c3e50; border-bottom: 2px solid #4CAF50; padding-bottom: 5px; margin-bottom: 10px; }
         .date-list { list-style-type: none; padding: 0; margin: 0; }
@@ -45,11 +45,17 @@
         
         .cal-item { border-radius: 4px; margin-bottom: 4px; border-left: 4px solid #ccc; display: flex; align-items: center; padding: 4px; min-height: 25px; }
         
-        /* 드래그 앤 드롭 전용 스타일 */
         .draggable-name { cursor: grab; background-color: rgba(255,255,255,0.8); border: 1px dashed #aaa; padding: 2px 5px; border-radius: 3px; display: inline-block; margin: 2px; transition: 0.2s; font-weight:bold; font-size:12.5px; z-index: 10;}
         .draggable-name:active { cursor: grabbing; opacity: 0.5; }
         .drop-zone { min-height: 25px; padding: 2px; flex-grow: 1; display: flex; flex-wrap: wrap; gap: 3px; align-items: center;}
         .drop-zone.over { background-color: rgba(243, 156, 18, 0.3); border-radius: 4px; border: 2px dashed #f39c12;}
+
+        /* 최고관리자 테이블 전용 스타일 */
+        .admin-table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 25px; }
+        .admin-table th, .admin-table td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        .admin-table th { background-color: #2c3e50; color: white; }
+        .del-btn { background-color: #e74c3c; width: auto; padding: 6px 12px; font-size: 13px; margin: 0; }
+        .add-btn { background-color: #27ae60; width: auto; padding: 12px 20px; font-size: 15px; margin: 0; }
 
         @media (max-width: 768px) {
             .calendar-table th, .calendar-table td { padding: 3px; height: 90px; }
@@ -64,7 +70,8 @@
 <div class="container" id="loginScreen">
     <h1>🏫 야간자율학습 감독 확인</h1>
     <div class="input-group">
-        <input type="text" id="teacherName" placeholder="선생님 성함을 입력하세요">
+        <!-- 이름 입력칸: 한글 우선 (ime-mode: active) -->
+        <input type="text" id="teacherName" placeholder="선생님 성함을 입력하세요" style="ime-mode: active;">
         <button onclick="checkDates()">내 일정 검색 (월별 확인)</button>
     </div>
     <div>
@@ -99,8 +106,9 @@
 <div class="container" id="adminLoginScreen">
     <h1>⚙️ 관리자 로그인</h1>
     <div class="input-group">
-        <input type="text" id="adminId" placeholder="관리자 이름">
-        <input type="password" id="adminPw" placeholder="비밀번호" onkeyup="if(window.event.keyCode==13){adminLogin()}">
+        <!-- 이름칸 한글 우선, 비번칸 영문/숫자 우선 설정 -->
+        <input type="text" id="adminId" placeholder="관리자 이름" style="ime-mode: active;">
+        <input type="password" id="adminPw" placeholder="비밀번호" style="ime-mode: disabled;" onkeyup="if(window.event.keyCode==13){adminLogin()}">
         <button style="background-color: #34495e;" onclick="adminLogin()">로그인</button>
     </div>
     <div style="text-align: center;"><button class="back-btn" onclick="goBack()">돌아가기</button></div>
@@ -110,7 +118,12 @@
 <div class="container" id="adminScreen">
     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 10px;">
         <h1 style="color: #e74c3c; margin:0;">🛠️ 관리자 모드 (드래그 저장)</h1>
-        <button class="save-btn" onclick="saveAdminChanges()">💾 저장하기</button>
+        <div style="display: flex; gap: 10px;">
+            <!-- 최고관리자에게만 보이는 계정 관리 버튼 -->
+            <button id="superAdminBtn" class="save-btn" style="background-color: #2980b9; display: none;" onclick="openSuperAdminMenu()">👑 계정 관리</button>
+            <button class="save-btn" style="background-color: #8e44ad;" onclick="changeAdminPassword()">🔑 비번 변경</button>
+            <button class="save-btn" onclick="saveAdminChanges()">💾 저장하기</button>
+        </div>
     </div>
     
     <div class="calendar-header">
@@ -122,6 +135,37 @@
     <div style="text-align: center;"><button class="back-btn" onclick="goBack()">로그아웃 및 돌아가기</button></div>
 </div>
 
+<!-- 최고관리자 계정 관리 화면 -->
+<div class="container" id="superAdminScreen">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 10px;">
+        <h1 style="color: #2980b9; margin:0;">👑 최고관리자: 계정 관리</h1>
+        <button class="save-btn" onclick="saveSuperAdminChanges()">💾 시트에 최종 저장</button>
+    </div>
+    
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>관리자 이름(ID)</th>
+                <th>비밀번호</th>
+                <th>관리</th>
+            </tr>
+        </thead>
+        <tbody id="adminListBody">
+            <!-- 관리자 목록 렌더링 -->
+        </tbody>
+    </table>
+
+    <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;">
+        <!-- 최고관리자가 추가할 때도 한글/영문 자동 설정 반영 -->
+        <input type="text" id="newAdminId" placeholder="새 관리자 이름" style="width: 35%; padding: 10px; ime-mode: active;">
+        <input type="password" id="newAdminPw" placeholder="새 비밀번호" style="width: 35%; padding: 10px; ime-mode: disabled;">
+        <button class="add-btn" onclick="addNewAdmin()">➕ 추가하기</button>
+    </div>
+
+    <div style="text-align: center;"><button class="back-btn" onclick="switchScreen('adminScreen')">캘린더로 돌아가기</button></div>
+</div>
+
+
 <script>
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbzFpsT0mfZD0L6lTlLajcafYNari4oP2ILK45i4LNT5CvDE-WimIHXqbi2m7qtDaP8/exec'; 
 
@@ -130,9 +174,14 @@
 
     let currentCalYear = new Date().getFullYear();
     let currentCalMonth = new Date().getMonth() + 1;
+    
     let globalSheetData = null; 
     let globalHeaders = null;
+    let globalAdminData = []; 
+    
     let searchDataByMonth = {}; 
+    let currentLoggedInAdmin = ''; 
+    let isSuperAdmin = false; 
 
     window.onload = function() { buildMonthButtons(); };
 
@@ -159,7 +208,6 @@
         }
     }
 
-    // --- ★ 여러 관리자를 완벽하게 확인하도록 로직 강화 ★ ---
     async function adminLogin() {
         const adminId = document.getElementById('adminId').value.trim();
         const adminPw = document.getElementById('adminPw').value.trim();
@@ -167,27 +215,33 @@
 
         showLoading(true);
         try {
-            const adminData = await fetchSpecificSheet('관리자');
+            globalAdminData = await fetchSpecificSheet('관리자');
             let isSuccess = false;
+            isSuperAdmin = false;
             
-            // 등록된 모든 관리자를 1번째 행부터 끝까지 안전하게 검사
-            for (let i = 1; i < adminData.length; i++) {
-                // 시트에 빈 줄이 있더라도 멈추지 않고 건너뛰도록 처리
-                if (!adminData[i] || adminData[i].length === 0) continue;
+            for (let i = 1; i < globalAdminData.length; i++) {
+                if (!globalAdminData[i] || globalAdminData[i].length === 0) continue;
                 
-                let sheetId = (adminData[i][0] || '').toString().trim();
-                let sheetPw = (adminData[i][1] || '').toString().trim();
+                let sheetId = (globalAdminData[i][0] || '').toString().trim();
+                let sheetPw = (globalAdminData[i][1] || '').toString().trim();
                 
                 if (sheetId === adminId && sheetPw === adminPw) {
                     isSuccess = true; 
-                    break; // 일치하는 관리자를 찾으면 즉시 루프 종료
+                    currentLoggedInAdmin = sheetId;
+                    
+                    if (i === 1) {
+                        isSuperAdmin = true;
+                    }
+                    break;
                 }
             }
             
             if (isSuccess) {
-                alert('관리자 로그인 성공!');
+                alert(`환영합니다, ${currentLoggedInAdmin} 관리자님!${isSuperAdmin ? ' (최고관리자 권한 활성화)' : ''}`);
                 document.getElementById('adminId').value = ''; 
                 document.getElementById('adminPw').value = '';
+                
+                document.getElementById('superAdminBtn').style.display = isSuperAdmin ? 'inline-block' : 'none';
                 initCalendar(true); 
             } else { 
                 alert('이름 또는 비밀번호가 일치하지 않습니다.'); 
@@ -199,7 +253,118 @@
         }
     }
 
-    // --- 데이터 저장 ---
+    // --- 최고관리자 전용 계정 관리 ---
+    function openSuperAdminMenu() {
+        renderAdminList();
+        switchScreen('superAdminScreen');
+    }
+
+    function renderAdminList() {
+        let tbody = document.getElementById('adminListBody');
+        tbody.innerHTML = '';
+
+        for (let i = 1; i < globalAdminData.length; i++) {
+            let row = globalAdminData[i];
+            if (!row || row.length === 0) continue;
+
+            let id = row[0] || '';
+            let pw = row[1] || '';
+
+            let isSuper = (i === 1);
+            let btnHtml = isSuper ? 
+                `<span style="color:#7f8c8d; font-weight:bold;">삭제 불가 (최고관리자)</span>` : 
+                `<button class="del-btn" onclick="deleteAdmin(${i})">🗑️ 삭제</button>`;
+
+            tbody.innerHTML += `
+                <tr>
+                    <td style="font-weight:bold;">${id} ${isSuper ? '👑' : ''}</td>
+                    <td>${pw}</td>
+                    <td>${btnHtml}</td>
+                </tr>
+            `;
+        }
+    }
+
+    function addNewAdmin() {
+        let newId = document.getElementById('newAdminId').value.trim();
+        let newPw = document.getElementById('newAdminPw').value.trim();
+
+        if (!newId || !newPw) {
+            alert('아이디와 비밀번호를 모두 입력해주세요.');
+            return;
+        }
+
+        for (let i = 1; i < globalAdminData.length; i++) {
+            if (globalAdminData[i] && globalAdminData[i][0] === newId) {
+                alert('이미 존재하는 관리자 이름입니다.');
+                return;
+            }
+        }
+
+        globalAdminData.push([newId, newPw]);
+        document.getElementById('newAdminId').value = '';
+        document.getElementById('newAdminPw').value = '';
+        renderAdminList();
+    }
+
+    function deleteAdmin(index) {
+        if (!confirm(`'${globalAdminData[index][0]}' 관리자를 정말 삭제하시겠습니까?`)) return;
+        globalAdminData.splice(index, 1);
+        renderAdminList();
+    }
+
+    async function saveSuperAdminChanges() {
+        if (!confirm('현재 화면에 보이는 관리자 목록으로 구글 시트를 업데이트하시겠습니까?')) return;
+        
+        showLoading(true);
+        try {
+            let submitData = globalAdminData.map(row => [row[0] || '', row[1] || '']);
+
+            const payload = { action: 'saveAdmins', sheetId: SHEET_ID, data: submitData };
+            const response = await fetch(GAS_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' }, 
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+            if (result.status === 'success') {
+                alert('관리자 계정 목록이 성공적으로 저장되었습니다!');
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (error) {
+            alert('저장 중 오류가 발생했습니다: ' + error.message);
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // --- 비밀번호 변경 ---
+    async function changeAdminPassword() {
+        if (!currentLoggedInAdmin) { alert('다시 로그인 해주세요.'); return; }
+        const newPw = prompt(`[${currentLoggedInAdmin}] 관리자님의 새로운 비밀번호를 입력하세요.\n(취소하려면 내용 없이 확인을 누르세요)`);
+        if (!newPw) return; 
+        const confirmPw = prompt('비밀번호 확인을 위해 다시 한번 입력해주세요.');
+        if (newPw !== confirmPw) { alert('입력하신 두 비밀번호가 일치하지 않습니다.'); return; }
+
+        showLoading(true);
+        try {
+            const payload = { action: 'changePassword', sheetId: SHEET_ID, adminId: currentLoggedInAdmin, newPassword: newPw };
+            const response = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) });
+            const result = await response.json();
+            if (result.status === 'success') {
+                alert('비밀번호가 성공적으로 변경되었습니다!');
+                for (let i = 1; i < globalAdminData.length; i++) {
+                    if (globalAdminData[i] && globalAdminData[i][0] === currentLoggedInAdmin) {
+                        globalAdminData[i][1] = newPw;
+                    }
+                }
+            } else throw new Error(result.message);
+        } catch (error) { alert('비밀번호 변경 오류: ' + error.message); } finally { showLoading(false); }
+    }
+
+    // --- 데이터 저장 (캘린더 드래그 앤 드롭) ---
     async function saveAdminChanges() {
         if (!confirm('화면에 보이는 배치 상태로 구글 스프레드시트에 저장하시겠습니까?')) return;
         showLoading(true);
@@ -208,18 +373,11 @@
             const maxCols = globalHeaders.length; 
 
             for (let i = 0; i < newData.length; i++) {
-                if (newData[i].length > maxCols) {
-                    newData[i] = newData[i].slice(0, maxCols);
-                }
-                while (newData[i].length < maxCols) {
-                    newData[i].push('');
-                }
-                
+                if (newData[i].length > maxCols) newData[i] = newData[i].slice(0, maxCols);
+                while (newData[i].length < maxCols) newData[i].push('');
                 if (i > 0) {
                     for (let j = 2; j < maxCols; j++) {
-                        if (globalHeaders[j] && !globalHeaders[j].includes('비고')) {
-                            newData[i][j] = ''; 
-                        }
+                        if (globalHeaders[j] && !globalHeaders[j].includes('비고')) newData[i][j] = ''; 
                     }
                 }
             }
@@ -247,11 +405,8 @@
                 for (let j = 2; j < maxCols; j++) {
                     let header = globalHeaders[j] ? globalHeaders[j].replace(/\s/g, '') : '';
                     if (header.includes(loc)) {
-                        if (tm) {
-                            if (header.includes(tm)) { colIdx = j; break; }
-                        } else {
-                            colIdx = j; break;
-                        }
+                        if (tm) { if (header.includes(tm)) { colIdx = j; break; } } 
+                        else { colIdx = j; break; }
                     }
                 }
 
@@ -261,26 +416,16 @@
                 }
             });
 
-            const payload = { sheetId: SHEET_ID, sheetName: '감독표', data: newData };
-            const response = await fetch(GAS_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain' }, 
-                body: JSON.stringify(payload)
-            });
-
+            const payload = { action: 'saveSchedule', sheetId: SHEET_ID, sheetName: '감독표', data: newData };
+            const response = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) });
             const result = await response.json();
+            
             if (result.status === 'success') {
                 alert('저장이 완료되었습니다!');
                 globalSheetData = newData; 
-            } else {
-                throw new Error(result.message);
-            }
+            } else throw new Error(result.message);
 
-        } catch (error) {
-            alert('저장 중 오류가 발생했습니다: ' + error.message);
-        } finally {
-            showLoading(false);
-        }
+        } catch (error) { alert('저장 중 오류가 발생했습니다: ' + error.message); } finally { showLoading(false); }
     }
 
     // --- 개인 일정 검색 ---
@@ -457,8 +602,6 @@
                             
                             if (timeMark && !dayTimeMarks.includes(timeMark)) dayTimeMarks.push(timeMark);
                             
-                            // 이름이 배정된 층(baseLoc)만 groups 딕셔너리에 추가되므로,
-                            // 결과적으로 이름이 1명도 없는 층은 자연스럽게 건너뛰어집니다.
                             if (!groups[baseLoc]) groups[baseLoc] = [];
                             groups[baseLoc].push({ name: row[j].trim(), timeMark: timeMark });
                         }
@@ -525,7 +668,6 @@
         return result;
     }
 
-    // --- 드래그 앤 드롭 이벤트 ---
     function setupDragAndDrop() {
         const draggables = document.querySelectorAll('.draggable-name');
         const dropZones = document.querySelectorAll('.drop-zone');
@@ -560,13 +702,14 @@
 
     function showLoading(show) { document.getElementById('loading').style.display = show ? 'block' : 'none'; }
     function switchScreen(screenId) {
-        ['loginScreen', 'resultScreen', 'calendarScreen', 'adminLoginScreen', 'adminScreen'].forEach(id => {
+        ['loginScreen', 'resultScreen', 'calendarScreen', 'adminLoginScreen', 'adminScreen', 'superAdminScreen'].forEach(id => {
             document.getElementById(id).style.display = 'none';
         });
         document.getElementById(screenId).style.display = 'block';
     }
     function goBack() {
         document.getElementById('teacherName').value = ''; document.getElementById('adminId').value = ''; document.getElementById('adminPw').value = '';
+        currentLoggedInAdmin = ''; isSuperAdmin = false;
         switchScreen('loginScreen');
     }
 </script>
