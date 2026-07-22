@@ -70,7 +70,6 @@
 <div class="container" id="loginScreen">
     <h1>🏫 야간자율학습 감독 확인</h1>
     <div class="input-group">
-        <!-- 이름 입력칸: 한글 우선 (ime-mode: active) -->
         <input type="text" id="teacherName" placeholder="선생님 성함을 입력하세요" style="ime-mode: active;">
         <button onclick="checkDates()">내 일정 검색 (월별 확인)</button>
     </div>
@@ -106,7 +105,6 @@
 <div class="container" id="adminLoginScreen">
     <h1>⚙️ 관리자 로그인</h1>
     <div class="input-group">
-        <!-- 이름칸 한글 우선, 비번칸 영문/숫자 우선 설정 -->
         <input type="text" id="adminId" placeholder="관리자 이름" style="ime-mode: active;">
         <input type="password" id="adminPw" placeholder="비밀번호" style="ime-mode: disabled;" onkeyup="if(window.event.keyCode==13){adminLogin()}">
         <button style="background-color: #34495e;" onclick="adminLogin()">로그인</button>
@@ -119,7 +117,6 @@
     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 10px;">
         <h1 style="color: #e74c3c; margin:0;">🛠️ 관리자 모드 (드래그 저장)</h1>
         <div style="display: flex; gap: 10px;">
-            <!-- 최고관리자에게만 보이는 계정 관리 버튼 -->
             <button id="superAdminBtn" class="save-btn" style="background-color: #2980b9; display: none;" onclick="openSuperAdminMenu()">👑 계정 관리</button>
             <button class="save-btn" style="background-color: #8e44ad;" onclick="changeAdminPassword()">🔑 비번 변경</button>
             <button class="save-btn" onclick="saveAdminChanges()">💾 저장하기</button>
@@ -150,13 +147,10 @@
                 <th>관리</th>
             </tr>
         </thead>
-        <tbody id="adminListBody">
-            <!-- 관리자 목록 렌더링 -->
-        </tbody>
+        <tbody id="adminListBody"></tbody>
     </table>
 
     <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;">
-        <!-- 최고관리자가 추가할 때도 한글/영문 자동 설정 반영 -->
         <input type="text" id="newAdminId" placeholder="새 관리자 이름" style="width: 35%; padding: 10px; ime-mode: active;">
         <input type="password" id="newAdminPw" placeholder="새 비밀번호" style="width: 35%; padding: 10px; ime-mode: disabled;">
         <button class="add-btn" onclick="addNewAdmin()">➕ 추가하기</button>
@@ -364,9 +358,9 @@
         } catch (error) { alert('비밀번호 변경 오류: ' + error.message); } finally { showLoading(false); }
     }
 
-    // --- 데이터 저장 (캘린더 드래그 앤 드롭) ---
+    // --- ★ 데이터 저장 (캘린더 드래그 앤 드롭: 현재 월의 데이터만 보호하여 덮어쓰기) ★ ---
     async function saveAdminChanges() {
-        if (!confirm('화면에 보이는 배치 상태로 구글 스프레드시트에 저장하시겠습니까?')) return;
+        if (!confirm(`현재 화면에 보이는 ${currentCalMonth}월의 배치 상태를 구글 시트에 저장하시겠습니까?\n(다른 달의 데이터는 그대로 안전하게 유지됩니다.)`)) return;
         showLoading(true);
         try {
             let newData = JSON.parse(JSON.stringify(globalSheetData));
@@ -375,13 +369,24 @@
             for (let i = 0; i < newData.length; i++) {
                 if (newData[i].length > maxCols) newData[i] = newData[i].slice(0, maxCols);
                 while (newData[i].length < maxCols) newData[i].push('');
+                
+                // 1. 현재 화면에 표시된 월(currentCalMonth)의 데이터 행만 이름칸을 초기화합니다.
                 if (i > 0) {
-                    for (let j = 2; j < maxCols; j++) {
-                        if (globalHeaders[j] && !globalHeaders[j].includes('비고')) newData[i][j] = ''; 
+                    let dateStr = newData[i][0] ? newData[i][0].replace(/\s/g, '') : '';
+                    let match = dateStr.match(/^(\d+)[/\.월]/);
+                    let rowMonth = match ? parseInt(match[1], 10) : -1;
+
+                    if (rowMonth === currentCalMonth) {
+                        for (let j = 2; j < maxCols; j++) {
+                            if (globalHeaders[j] && !globalHeaders[j].includes('비고')) {
+                                newData[i][j] = ''; 
+                            }
+                        }
                     }
                 }
             }
 
+            // 2. 화면의 드래그 항목을 읽어서 정확한 열에 배치합니다.
             const draggables = document.querySelectorAll('.draggable-name');
             draggables.forEach(el => {
                 const dropZone = el.closest('.drop-zone');
@@ -416,12 +421,13 @@
                 }
             });
 
+            // 3. 전체 데이터(수정된 월 + 보호된 나머지 월)를 다시 시트로 보냅니다.
             const payload = { action: 'saveSchedule', sheetId: SHEET_ID, sheetName: '감독표', data: newData };
             const response = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) });
             const result = await response.json();
             
             if (result.status === 'success') {
-                alert('저장이 완료되었습니다!');
+                alert(`${currentCalMonth}월 데이터 저장이 완료되었습니다!`);
                 globalSheetData = newData; 
             } else throw new Error(result.message);
 
