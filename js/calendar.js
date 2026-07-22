@@ -25,7 +25,9 @@ async function loadAndRenderCalendar(isAdmin) {
         } else {
             document.getElementById('calendarTitle').innerText = currentCalYear + '년 ' + currentCalMonth + '월';
             document.getElementById('calendarContainer').innerHTML = calendarHtml;
-            switchScreen('calendarScreen');
+            
+            // ★ 핵심 변경: 분리되어 있던 달력 화면 대신 통합된 'resultScreen'을 띄워줍니다.
+            switchScreen('resultScreen');
         }
     } catch (error) { alert('오류 발생: ' + error.message); } finally { showLoading(false); }
 }
@@ -143,8 +145,6 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
                         dayTimeMarks.forEach(tm => {
                             let person = group.find(g => g.timeMark === tm);
                             let rawName = person ? person.name : '';
-                            
-                            // ★ "사감 " 이라는 글자를 억지로 붙이는 코드를 완전히 삭제했습니다!
                             let displayStr = rawName; 
                             
                             if(isAdmin && displayStr) {
@@ -158,7 +158,7 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
                         if (group.length > 0) {
                             group.forEach((g, idx) => {
                                 let rawName = g.name;
-                                let displayStr = rawName; // 여기도 통일 완료
+                                let displayStr = rawName; 
                                 if(isAdmin) {
                                     let tm = g.timeMark || '';
                                     let itemId = `drag-${month}-${day}-${baseLoc}-${idx}-${rawName}`;
@@ -174,7 +174,6 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
             }
             break; 
         }
-        
     }
     
     return `<div class="cal-date" style="display: flex; align-items: center; margin-bottom: 4px;"><span style="font-size: 15px;">${day}</span>${bigoStr}</div>` + result;
