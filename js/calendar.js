@@ -41,10 +41,9 @@ function buildCalendarHTML(year, month, rows, headers, isAdmin) {
     let dayCount = 1;
     let i = 0;
     
-    // ★ 빈 줄 생성 원천 차단: while문으로 해당 월이 끝나면 즉시 표 그리기를 종료합니다.
     while (true) {
         if (i > 0 && i % 7 === 0) {
-            if (dayCount > daysInMonth) break; // 이번 달 날짜가 다 끝났다면 새 줄을 만들지 않고 즉시 탈출
+            if (dayCount > daysInMonth) break; 
             html += '</tr><tr>';
         }
         
@@ -82,7 +81,6 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
             for (let j = 2; j < row.length; j++) {
                 if (row[j] && row[j].trim() !== '') {
                     let loc = headers[j] ? headers[j].trim() : '기타';
-                    // 비고 내용만 수집하고 선생님 숫자는 올리지 않습니다.
                     if (loc.includes('비고')) {
                         bigoList.push(row[j]);
                     }
@@ -93,11 +91,14 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
                         else if (loc.includes('4층')) { baseLoc = '4층'; timeMark = loc.replace('4층', '').replace(/[\(\)]/g, '').trim(); }
                         else if (loc.includes('사감')) { baseLoc = '사감'; timeMark = loc.replace('사감', '').replace(/[\(\)]/g, '').trim(); }
                         
-                        if (timeMark && !dayTimeMarks.includes(timeMark)) dayTimeMarks.push(timeMark);
+                        // ★ 핵심 수정: 괄호 안에 시간대가 안 적혀있으면(예: '사감') 무조건 '야간(디폴트)'으로 간주합니다!
+                        if (timeMark === '') timeMark = '야간';
+                        
+                        if (!dayTimeMarks.includes(timeMark)) dayTimeMarks.push(timeMark);
                         
                         if (!groups[baseLoc]) groups[baseLoc] = []; 
                         groups[baseLoc].push({ name: row[j].trim(), timeMark: timeMark });
-                        totalTeacherCount++; // 진짜 선생님이 있을 때만 카운트 증가
+                        totalTeacherCount++; 
                     }
                 }
             }
@@ -106,10 +107,8 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
                 bigoStr = `<span style="color: #e74c3c; font-size: 13.5px; font-weight: bold; margin-left: 6px; word-break: keep-all;">${bigoList.join(', ')}</span>`;
             }
 
-            // ★ 선생님이 0명이면 이 안의 블록 생성 로직이 아예 실행되지 않습니다.
             if (totalTeacherCount > 0) {
-                // ★ 실제 '오후', '야간' 같은 시간대 데이터가 배열에 존재할 때만 공간을 엽니다.
-                let showTimeHeaders = (dayTimeMarks.length > 0); 
+                let showTimeHeaders = (dayTimeMarks.length >= 2); 
                 
                 if (showTimeHeaders) {
                     let topHeaderHtml = `<div style="display: flex; justify-content: center; align-items: flex-end; margin-bottom: 3px; min-height: 14px;">`;
@@ -124,7 +123,6 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
                     topHeaderHtml += `</div></div>`;
                     result += topHeaderHtml;
                 }
-                // showTimeHeaders가 false이면 불필요한 빈 공간(여백) 태그를 전혀 넣지 않습니다.
 
                 const locOrder = ['2층', '3층', '4층', '사감'];
                 const sortedLocs = locOrder.concat(Object.keys(groups).filter(l => !locOrder.includes(l)));
