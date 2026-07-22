@@ -110,7 +110,6 @@ async function saveAdminChanges() {
     if (!confirm(`현재 화면에 보이는 ${currentCalMonth}월의 배치 상태를 구글 시트에 저장하시겠습니까?\n(다른 달의 데이터는 그대로 안전하게 유지됩니다.)`)) return;
     showLoading(true);
     try {
-        // ★ 핵심 수정: 구글 시트의 "최신" 데이터를 실시간으로 다시 불러와 비고란이 삭제되는 것을 완벽 차단합니다.
         const freshSheetData = await fetchSpecificSheet('감독표');
         let newData = JSON.parse(JSON.stringify(freshSheetData));
         const maxCols = globalHeaders.length; 
@@ -126,7 +125,6 @@ async function saveAdminChanges() {
 
                 if (rowMonth === currentCalMonth) {
                     for (let j = 2; j < maxCols; j++) {
-                        // '비고' 열은 절대로 비우지 않도록 보호합니다.
                         if (globalHeaders[j] && !globalHeaders[j].includes('비고')) {
                             newData[i][j] = ''; 
                         }
@@ -158,7 +156,11 @@ async function saveAdminChanges() {
             for (let j = 2; j < maxCols; j++) {
                 let header = globalHeaders[j] ? globalHeaders[j].replace(/\s/g, '') : '';
                 if (header.includes(loc)) {
-                    if (tm) { if (header.includes(tm)) { colIdx = j; break; } } 
+                    if (tm) { 
+                        if (header.includes(tm)) { colIdx = j; break; }
+                        // ★ 핵심 수정: 야간은 기본값이므로, 헤더에 '오후'가 안 적혀 있으면 일치하는 것으로 간주합니다.
+                        else if (tm === '야간' && !header.includes('오후')) { colIdx = j; break; }
+                    } 
                     else { colIdx = j; break; }
                 }
             }
@@ -175,7 +177,7 @@ async function saveAdminChanges() {
         
         if (result.status === 'success') {
             alert(`${currentCalMonth}월 데이터 저장이 완료되었습니다!`);
-            globalSheetData = newData; // 저장 후 웹페이지 메모리도 최신 상태로 갱신
+            globalSheetData = newData;
         } else throw new Error(result.message);
 
     } catch (error) { alert('저장 중 오류가 발생했습니다: ' + error.message); } finally { showLoading(false); }
