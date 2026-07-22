@@ -5,37 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>야간자율학습 감독일자 확인</title>
     <style>
-        /* 1. 배경을 화면 정중앙에 배치하는 기본 설정 */
         body { font-family: 'Malgun Gothic', sans-serif; background-color: #f4f7f6; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        
-        /* 2. 모든 박스의 기본 둥글기 및 그림자 효과 */
         .container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 95%; max-width: 800px; text-align: center; box-sizing: border-box; }
         
-        /* ★ 핵심: 로그인 화면과 관리자 로그인 화면만 작고 아담하게 축소 ★ */
         #loginScreen, #adminLoginScreen { max-width: 380px; padding: 40px 20px; }
         
-        /* 달력과 계정 관리 화면은 데이터를 많이 봐야 하므로 넓게 유지 */
-        #calendarScreen, #adminScreen, #superAdminScreen { max-width: 1200px; }
+        /* ★ 달력과 계정 관리 화면의 폭을 대폭 확장하여 글자 꺾임 방지 ★ */
+        #calendarScreen, #adminScreen, #superAdminScreen { max-width: 1500px; width: 98%; }
         
         h1 { font-size: 22px; color: #333; margin-bottom: 25px; }
-        
-        /* 3. 입력칸과 버튼들을 세로로 예쁘게 가운데 정렬 */
         .input-group { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
         
-        /* 입력칸 디자인 세련되게 다듬기 */
         input[type="text"], input[type="password"] { width: 85%; padding: 14px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; text-align: center; box-sizing: border-box; transition: 0.3s; }
         input[type="text"]:focus, input[type="password"]:focus { border-color: #4CAF50; outline: none; box-shadow: 0 0 5px rgba(76, 175, 80, 0.3); }
         
-        /* 4. 버튼들을 로그인 박스 비율(85%)에 맞춰 꽉 차고 안정감 있게 설정 */
         button { width: 85%; background-color: #4CAF50; color: white; border: none; padding: 14px 20px; font-size: 15px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-bottom: 10px; transition: 0.2s; box-sizing: border-box;}
         button.cal-btn { background-color: #3498db; }
         
-        /* 5. 관리자 로그인 버튼을 우측 하단에 조그마한 텍스트 링크처럼 변경 */
         .admin-link-box { width: 85%; margin: 0 auto; text-align: right; }
         button.admin-btn { background-color: transparent; color: #7f8c8d; font-size: 13px; font-weight: normal; text-decoration: underline; width: auto; padding: 5px; margin-top: 5px; }
         button.admin-btn:hover { color: #34495e; background-color: transparent; }
         
-        /* 상단 네비게이션 버튼 등 기타 버튼들 사이즈 원상복구용 */
         button.save-btn { background-color: #e74c3c; width: auto; padding: 10px 20px; margin: 0; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
         button:hover { opacity: 0.9; }
         .back-btn { background-color: #7f8c8d; width: 85%; padding: 12px 20px; margin-top: 20px; }
@@ -66,7 +56,7 @@
         
         .draggable-name { cursor: grab; background-color: rgba(255,255,255,0.8); border: 1px dashed #aaa; padding: 2px 5px; border-radius: 3px; display: inline-block; margin: 2px; transition: 0.2s; font-weight:bold; font-size:12.5px; z-index: 10;}
         .draggable-name:active { cursor: grabbing; opacity: 0.5; }
-        .drop-zone { min-height: 25px; padding: 2px; flex-grow: 1; display: flex; flex-wrap: wrap; gap: 3px; align-items: center;}
+        .drop-zone { min-height: 25px; padding: 2px; flex-grow: 1; display: flex; flex-wrap: wrap; align-items: center;}
         .drop-zone.over { background-color: rgba(243, 156, 18, 0.3); border-radius: 4px; border: 2px dashed #f39c12;}
 
         .admin-table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 25px; }
@@ -84,7 +74,6 @@
 </head>
 <body>
 
-<!-- 메인 로그인 화면 -->
 <div class="container" id="loginScreen">
     <h1>🏫 감독 일정 확인</h1>
     <div class="input-group">
@@ -95,14 +84,12 @@
         <button class="cal-btn" onclick="initCalendar(false)">전체 달력 보기</button>
     </div>
     
-    <!-- 우측 하단에 조그맣게 배치된 관리자 로그인 텍스트 -->
     <div class="admin-link-box">
         <button class="admin-btn" onclick="switchScreen('adminLoginScreen')">⚙️ 관리자 모드</button>
     </div>
     <div id="loading">데이터를 불러오는 중입니다...</div>
 </div>
 
-<!-- 개인 리스트 결과 화면 -->
 <div class="container result-area" id="resultScreen">
     <h1 id="resultTitle" style="text-align: center;"></h1>
     <div class="month-filter-container" id="monthFilterContainer"></div>
@@ -110,7 +97,6 @@
     <div style="text-align: center;"><button class="back-btn" style="width:auto; padding:10px 30px;" onclick="goBack()">돌아가기</button></div>
 </div>
 
-<!-- 일반 교사용 달력 화면 -->
 <div class="container" id="calendarScreen">
     <div class="calendar-header">
         <button class="cal-nav-btn" onclick="changeMonth(-1, false)">◀ 이전</button>
@@ -121,7 +107,6 @@
     <div style="text-align: center;"><button class="back-btn" style="width:auto; padding:10px 30px;" onclick="goBack()">돌아가기</button></div>
 </div>
 
-<!-- 관리자 로그인 화면 (메인화면과 동일하게 작고 아담하게 적용됨) -->
 <div class="container" id="adminLoginScreen">
     <h1>⚙️ 관리자 로그인</h1>
     <div class="input-group" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
@@ -134,7 +119,6 @@
     </div>
 </div>
 
-<!-- 관리자 전용 캘린더 화면 -->
 <div class="container" id="adminScreen">
     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 10px;">
         <h1 style="color: #e74c3c; margin:0;">🛠️ 관리자 모드 (드래그 저장)</h1>
@@ -154,7 +138,6 @@
     <div style="text-align: center;"><button class="back-btn" style="width:auto; padding:10px 30px;" onclick="goBack()">로그아웃 및 돌아가기</button></div>
 </div>
 
-<!-- 최고관리자 계정 관리 화면 -->
 <div class="container" id="superAdminScreen">
     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 10px;">
         <h1 style="color: #2980b9; margin:0;">👑 최고관리자: 계정 관리</h1>
@@ -181,13 +164,13 @@
     <div style="text-align: center;"><button class="back-btn" style="width:auto; padding:10px 30px;" onclick="switchScreen('adminScreen')">캘린더로 돌아가기</button></div>
 </div>
 
-<!-- 기능별로 완벽하게 분리된 라이브러리 파일들 (순서 유지 필수) -->
-<script src="js/config.js"></script>
-<script src="js/api.js"></script>
-<script src="js/ui.js"></script>
-<script src="js/search.js"></script>
-<script src="js/calendar.js"></script>
-<script src="js/admin.js"></script>
+<!-- 기능별로 완벽하게 분리된 라이브러리 파일들 (캐시 방지 v=3) -->
+<script src="js/config.js?v=3"></script>
+<script src="js/api.js?v=3"></script>
+<script src="js/ui.js?v=3"></script>
+<script src="js/search.js?v=3"></script>
+<script src="js/calendar.js?v=3"></script>
+<script src="js/admin.js?v=3"></script>
 
 </body>
 </html>
