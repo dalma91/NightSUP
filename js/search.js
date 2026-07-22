@@ -7,6 +7,8 @@ async function checkDates() {
     showLoading(true);
     try {
         await initSupervisorData();
+        // searchDataByMonth가 정의되지 않았을 경우를 대비해 초기화
+        if (typeof searchDataByMonth === 'undefined') window.searchDataByMonth = {};
         for (let m = 1; m <= 12; m++) searchDataByMonth[m] = [];
         let foundAny = false;
 
@@ -45,7 +47,8 @@ async function checkDates() {
 
                     let locColor = '#555'; 
                     if (location.includes('2층')) locColor = 'black'; else if (location.includes('3층')) locColor = '#0056b3';
-                    else if (location.includes('4층')) locColor = '#198754'; else if (location.includes('사감')) locColor = '#8e44ad'; 
+                    else if (location.includes('4층')) locColor = '#198754'; 
+                    else if (location.includes('사감')) locColor = 'black'; // ★ 보라색(#8e44ad)에서 검정색(black)으로 수정 완료!
                     else if (location.includes('비고')) locColor = '#dc3545';
 
                     let displayText = dateStr + (day ? ' (' + day + ')' : '');
@@ -68,12 +71,16 @@ async function checkDates() {
         document.getElementById('resultTitle').innerText = searchedName + ' 선생님 일정';
 
         if (foundAny) {
-            const now = new Date(); let nextMonth = now.getMonth() + 2; if (nextMonth > 12) nextMonth = 1;
-            document.getElementById('monthFilterContainer').style.display = 'flex';
-            document.querySelectorAll('.month-btn').forEach(btn => btn.classList.remove('active'));
-            renderSearchResults([now.getMonth() + 1, nextMonth], '이번 달과 다음 달의 일정을 보여줍니다.');
+            // ★ 달력 스와이프 기능과 연동하기 위해 검색된 모든 월의 데이터를 렌더링합니다. (화면 노출은 index.html에서 제어함)
+            let allMonths = [];
+            for (let m = 1; m <= 12; m++) { if (searchDataByMonth[m].length > 0) allMonths.push(m); }
+            renderSearchResults(allMonths, '');
+            
+            // ★ 달력의 현재 월을 감지하여 2개월치만 보여주도록 자동 동기화
+            if (typeof updateMyScheduleDisplay === 'function') {
+                updateMyScheduleDisplay();
+            }
         } else {
-            document.getElementById('monthFilterContainer').style.display = 'none';
             document.getElementById('resultsContainer').innerHTML = '<p class="error-text">검색된 감독 일정이 없습니다.</p>';
         }
         switchScreen('resultScreen');
@@ -82,7 +89,8 @@ async function checkDates() {
 
 function filterByMonth(month) {
     document.querySelectorAll('.month-btn').forEach(btn => btn.classList.remove('active'));
-    document.getElementById('btn-month-' + month).classList.add('active');
+    let btn = document.getElementById('btn-month-' + month);
+    if(btn) btn.classList.add('active');
     renderSearchResults([month], month + '월에는 배정된 일정이 없습니다.');
 }
 
