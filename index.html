@@ -70,7 +70,6 @@
             .calendar-table th, .calendar-table td { padding: 1px; height: 50px; }
         }
 
-        /* 통계 팝업(모달) 스타일 */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: white; padding: 20px; border-radius: 10px; width: 95%; max-width: 700px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
@@ -92,14 +91,14 @@
     <div class="layout-wrapper">
         
         <div id="myScheduleArea">
-            <!-- ★ 이름 검색 및 관리자 버튼 통합 영역 (요청하신 박스 배치 구현) ★ -->
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 10px;">
                 <div style="display:flex; align-items:center; gap: 5px;">
                     <div style="display:flex; align-items:center; border-bottom: 2px solid #e74c3c;">
                         <input type="text" id="teacherName" placeholder="이름" style="border:none; outline:none; font-size:20px; font-weight:bold; width:70px; text-align:center; padding:2px; background:transparent;" onkeyup="if(window.event.keyCode==13){searchAndShowBoth()}">
                         <button onclick="searchAndShowBoth()" style="background:none; border:none; padding:2px 5px; cursor:pointer; font-size:18px; margin:0;" title="검색">🔍</button>
                     </div>
-                    <h1 style="margin:0; font-size:20px; color:#2c3e50;">선생님 일정</h1>
+                    <!-- ★ '일정' 글자 삭제 및 줄바꿈 방지(white-space: nowrap) 처리 완료 -->
+                    <h1 style="margin:0; font-size:20px; color:#2c3e50; white-space: nowrap;">선생님</h1>
                 </div>
                 <button onclick="switchScreen('adminLoginScreen')" style="background:none; border:none; padding:5px; cursor:pointer; font-size:18px; margin:0; color:#7f8c8d;" title="관리자 로그인">⚙️</button>
             </div>
@@ -190,16 +189,15 @@
     </div>
 </div>
 
-<!-- ★ 스크립트 연결 주소 v=28 적용 ★ -->
-<script src="js/config.js?v=28"></script>
-<script src="js/api.js?v=28"></script>
-<script src="js/ui.js?v=28"></script>
-<script src="js/search.js?v=28"></script>
-<script src="js/calendar.js?v=28"></script>
-<script src="js/admin.js?v=28"></script>
+<!-- ★ 스크립트 연결 주소 v=30 (캐시 방지용) ★ -->
+<script src="js/config.js?v=30"></script>
+<script src="js/api.js?v=30"></script>
+<script src="js/ui.js?v=30"></script>
+<script src="js/search.js?v=30"></script>
+<script src="js/calendar.js?v=30"></script>
+<script src="js/admin.js?v=30"></script>
 
 <script>
-    // ★ 페이지 최초 로드 시 메인 화면(달력) 바로 띄우기
     window.onload = async function() {
         document.getElementById('resultScreen').style.display = 'block';
         if (typeof initCalendar === 'function') {
@@ -207,17 +205,19 @@
         }
     };
 
-    // 🏠 홈 버튼을 누르면 화면 초기화
+    // ★ 홈 버튼 클릭 시 안내 메시지도 원상복구 되도록 설정
     function resetHome() {
         document.getElementById('teacherName').value = '';
         document.getElementById('resultsContainer').innerHTML = '';
-        document.getElementById('resultTitle').innerText = '이름을 입력하고 돋보기를 눌러주세요.';
+        const titleEl = document.getElementById('resultTitle');
+        titleEl.style.display = 'block';
+        titleEl.innerText = '이름을 입력하고 돋보기를 눌러주세요.';
+        titleEl.style.color = '#7f8c8d';
         currentCalYear = new Date().getFullYear();
         currentCalMonth = new Date().getMonth() + 1;
         initCalendar(false);
     }
 
-    // 관리자 화면에서 뒤로가기 시 무조건 메인 화면으로 복귀하도록 기존 함수 덮어쓰기
     window.goBack = function() {
         switchScreen('resultScreen');
         if (typeof initCalendar === 'function') {
@@ -225,13 +225,16 @@
         }
     };
 
-    function updateMyScheduleDisplay() {
+    function updateMyScheduleDisplay(targetMonth) {
         const sections = document.querySelectorAll('.month-section');
         if (!sections || sections.length === 0) return;
 
-        const currentMonth = currentCalMonth;
+        let currentMonth = targetMonth;
+        if (!currentMonth) {
+            try { currentMonth = currentCalMonth; } catch(e) { currentMonth = new Date().getMonth() + 1; }
+        }
+
         let nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
-        
         if (currentMonth === 2) { nextMonth = -1; }
         
         let visibleCount = 0;
@@ -290,7 +293,6 @@
                 let res = checkDates();
                 if (res instanceof Promise) await res;
             }
-            // 검색 후 달력을 그릴 때 당월/익월 연동을 위해 호출
             if (typeof initCalendar === 'function') { await initCalendar(false); }
         } catch (e) { console.log("통합 화면 표시 중 문제 발생:", e); }
     }

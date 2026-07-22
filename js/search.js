@@ -68,11 +68,10 @@ async function checkDates() {
             }
         }
 
-        // 검색창이 타이틀 역할을 하므로, 하단 안내 메시지로 변경합니다.
-        document.getElementById('resultTitle').innerText = `총 ${allSchedulesCount(searchDataByMonth)}건의 일정이 검색되었습니다.`;
-        document.getElementById('resultTitle').style.color = '#3498db';
-
         if (foundAny) {
+            // ★ 요쳥하신 대로 성공 시 건수 표시를 하지 않고 메시지 텍스트를 숨깁니다.
+            document.getElementById('resultTitle').style.display = 'none'; 
+            
             let allMonths = [];
             for (let m = 1; m <= 12; m++) { if (searchDataByMonth[m].length > 0) allMonths.push(m); }
             renderSearchResults(allMonths, '');
@@ -81,18 +80,13 @@ async function checkDates() {
                 updateMyScheduleDisplay();
             }
         } else {
+            // 실패했을 때만 빨간 글씨로 안내합니다.
+            document.getElementById('resultTitle').style.display = 'block';
             document.getElementById('resultTitle').innerText = '검색된 감독 일정이 없습니다.';
             document.getElementById('resultTitle').style.color = '#e74c3c';
             document.getElementById('resultsContainer').innerHTML = '';
         }
     } catch (error) { alert('오류 발생: ' + error.message); } finally { showLoading(false); }
-}
-
-// 총 검색 건수를 계산하는 헬퍼 함수
-function allSchedulesCount(dataObj) {
-    let count = 0;
-    for (let m in dataObj) { count += dataObj[m].length; }
-    return count;
 }
 
 function filterByMonth(month) {

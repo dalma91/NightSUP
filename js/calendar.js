@@ -28,8 +28,9 @@ async function loadAndRenderCalendar(isAdmin) {
             
             switchScreen('resultScreen');
 
+            // ★ 핵심 수정: 왼쪽 화면(index.html) 함수를 부를 때, 현재 캘린더가 몇 월인지 확실하게(currentCalMonth) 전달합니다!
             if (typeof updateMyScheduleDisplay === 'function') {
-                updateMyScheduleDisplay();
+                updateMyScheduleDisplay(currentCalMonth);
             }
         }
     } catch (error) { alert('오류 발생: ' + error.message); } finally { showLoading(false); }
@@ -147,7 +148,6 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
                     
                     let namesHtml = `<div class="drop-zone" data-loc="${baseLoc}" data-month="${month}" data-day="${day}" style="justify-content:center; width:100%; min-height:18px; gap:2px;">`;
 
-                    // ★ 핵심 수정: 사감(baseLoc === '사감')일 때는 2칸 분할(showTimeHeaders) 로직을 무조건 건너뜁니다!
                     if (showTimeHeaders && baseLoc !== '사감') {
                         dayTimeMarks.forEach(tm => {
                             let person = group.find(g => g.timeMark === tm);
@@ -166,7 +166,6 @@ function findDataForCalendar(rows, month, day, headers, isAdmin) {
                             }
                         });
                     } else {
-                        // 사감은 분할되지 않으므로 무조건 여기(전체 중앙 정렬)를 타게 됩니다.
                         if (group.length > 0) {
                             group.forEach((g, idx) => {
                                 let rawName = g.name;
